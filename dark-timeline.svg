@@ -1,0 +1,61 @@
+<svg width="100%" viewBox="0 0 760 410" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Dark timeline diagram</title>
+<desc>Timeline graph generated from JSON spec</desc>
+<defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+<text x="380" y="22" text-anchor="middle" font-family="sans-serif" font-size="13px" font-weight="500" fill="#c2c0b6">Time →</text>
+<line x1="50" y1="32" x2="740" y2="32" stroke="#888780" stroke-width="0.5" opacity="0.4"/>
+<line x1="141.11111111111111" y1="32" x2="141.11111111111111" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="141.11111111111111" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1900</text>
+<line x1="230" y1="32" x2="230" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="230" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1925</text>
+<line x1="318.8888888888889" y1="32" x2="318.8888888888889" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="318.8888888888889" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1950</text>
+<line x1="407.77777777777777" y1="32" x2="407.77777777777777" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="407.77777777777777" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1975</text>
+<line x1="496.66666666666663" y1="32" x2="496.66666666666663" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="496.66666666666663" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2000</text>
+<line x1="585.5555555555555" y1="32" x2="585.5555555555555" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="585.5555555555555" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2025</text>
+<line x1="674.4444444444445" y1="32" x2="674.4444444444445" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+<text x="674.4444444444445" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2050</text>
+<circle cx="446.8888888888889" cy="120" r="20" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>
+<path d="M 70.0 50.0 L 396.9 50.0 L 446.9 120.0 L 496.9 50.0 L 710.0 50.0" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="62" y="50" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#378ADD">Adam</text>
+<path d="M 70.0 120.0 L 396.9 120.0 L 446.9 120.0 L 496.9 120.0 L 710.0 120.0" fill="none" stroke="#D4537E" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="62" y="120" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#D4537E">Eva</text>
+<path d="M 70.0 190.0 L 396.9 190.0 L 446.9 120.0 L 496.9 190.0 L 710.0 190.0" fill="none" stroke="#888780" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="62" y="190" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#888780">Origin</text>
+<path d="M 393.6 260.0 L 710.0 260.0" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="62" y="260" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#1D9E75">Paradise</text>
+<circle cx="446.8888888888889" cy="120" r="4.5" fill="#378ADD" stroke="#378ADD" stroke-width="1"/>
+<path d="M 446.8888888888889 120 Q 388.22222222222223 14, 329.55555555555554 50" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<circle cx="329.55555555555554" cy="50" r="3.5" fill="#378ADD"/>
+<text x="329.55555555555554" y="40" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1953</text>
+<path d="M 446.8888888888889 120 Q 505.55555555555554 14, 564.2222222222222 50" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<circle cx="564.2222222222222" cy="50" r="3.5" fill="#378ADD"/>
+<text x="564.2222222222222" y="40" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2019</text>
+<text x="446.8888888888889" y="110" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="#378ADD">1986</text>
+<circle cx="446.8888888888889" cy="120" r="4.5" fill="#D4537E" stroke="#D4537E" stroke-width="1"/>
+<path d="M 446.8888888888889 120 Q 505.55555555555554 156, 564.2222222222222 120" fill="none" stroke="#D4537E" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<circle cx="564.2222222222222" cy="120" r="3.5" fill="#D4537E"/>
+<text x="564.2222222222222" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2019</text>
+<path d="M 446.8888888888889 120 Q 564.2222222222222 156, 681.5555555555555 120" fill="none" stroke="#D4537E" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<circle cx="681.5555555555555" cy="120" r="3.5" fill="#D4537E"/>
+<text x="681.5555555555555" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2052</text>
+<text x="446.8888888888889" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="#D4537E">1986</text>
+<line x1="567.7777777777778" y1="50" x2="567.7777777777778" y2="120" stroke="#D85A30" stroke-width="2.5"/>
+<circle cx="567.7777777777778" cy="50" r="4" fill="#D85A30"/>
+<circle cx="567.7777777777778" cy="120" r="4" fill="#D85A30"/>
+<text x="575.7777777777778" y="85" dominant-baseline="central" font-family="sans-serif" font-size="11px" font-weight="500" fill="#993C1D">apocalypse</text>
+<circle cx="446.8888888888889" cy="120" r="5" fill="#EF9F27"/>
+<text x="446.8888888888889" y="154" text-anchor="middle" font-family="sans-serif" font-size="11px" font-weight="500" fill="#854F0B">Tannhaus event (1986)</text>
+<path d="M 393.55555555555554 190 Q 393.55555555555554 225, 393.55555555555554 260" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="393.55555555555554" cy="190" r="3.5" fill="#1D9E75"/>
+<text x="393.55555555555554" y="206" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1971</text>
+<circle cx="567.7777777777778" cy="50" r="4" fill="#D85A30"/>
+<circle cx="567.7777777777778" cy="120" r="4" fill="#D85A30"/>
+</svg>

@@ -1,0 +1,350 @@
+<div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem 0;">
+
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<button id="btn-render" style="background: var(--color-background-info); color: var(--color-text-info); border: 0.5px solid var(--color-border-info); padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer;">Render</button>
+<button id="btn-reset" style="padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer;">Reset to default</button>
+<button id="btn-download-svg" style="padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer;">Download SVG</button>
+<button id="btn-download-json" style="padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer;">Download JSON</button>
+<span id="status" style="font-size: 12px; color: var(--color-text-secondary); align-self: center;"></span>
+</div>
+
+<div id="diagram-container" style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 12px; min-height: 400px; overflow-x: auto;">
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+<div>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+<label style="font-size: 13px; font-weight: 500;">Spec (JSON)</label>
+<span style="font-size: 12px; color: var(--color-text-tertiary);">Edit and click Render, or Ctrl/Cmd+Enter</span>
+</div>
+<textarea id="spec-editor" spellcheck="false" style="width: 100%; min-height: 320px; font-family: var(--font-mono); font-size: 12px; padding: 12px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); resize: vertical;"></textarea>
+</div>
+</div>
+
+<details style="font-size: 13px; color: var(--color-text-secondary);">
+<summary style="cursor: pointer; font-weight: 500; color: var(--color-text-primary);">Schema reference</summary>
+<div style="padding: 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-top: 8px; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><code>worlds</code>: array of timelines. Each has <code>id</code>, <code>label</code>, <code>color</code>, <code>row</code> (vertical slot, 0=top).</p>
+<p style="margin: 0 0 8px;"><code>yearRange</code>: <code>[startYear, endYear]</code> defines the x-axis time span.</p>
+<p style="margin: 0 0 8px;"><code>intersections</code>: array of convergence points. Each has <code>year</code> and <code>worlds</code> (list of world ids that meet there). Worlds bend toward a shared y at this year.</p>
+<p style="margin: 0 0 8px;"><code>caveStars</code>: array of intra-world wormholes. Each has <code>world</code>, <code>anchor</code> (year), <code>jumps</code> (list of years).</p>
+<p style="margin: 0 0 8px;"><code>welds</code>: array of cross-world bridges. Each has <code>from: {world, year}</code>, <code>to: {world, year}</code>, optional <code>label</code>.</p>
+<p style="margin: 0 0 8px;"><code>branches</code>: array of new timelines that emerge from another. Each has <code>fromWorld</code>, <code>fromYear</code>, <code>newWorld</code> (id of the resulting world, must exist in worlds), and the new world's first year is set by its branch point.</p>
+<p style="margin: 0;"><code>markers</code>: array of named events. Each has <code>world</code>, <code>year</code>, <code>label</code>, optional <code>color</code>.</p>
+</div>
+</details>
+
+</div>
+
+<script>
+const DEFAULT_SPEC = {
+  yearRange: [1880, 2060],
+  worlds: [
+    { id: "adam", label: "Adam", color: "#378ADD", row: 0 },
+    { id: "eva", label: "Eva", color: "#D4537E", row: 1 },
+    { id: "origin", label: "Origin", color: "#888780", row: 2, weight: 2 },
+    { id: "paradise", label: "Paradise", color: "#1D9E75", row: 3, startYear: 1971 }
+  ],
+  intersections: [
+    { year: 1986, worlds: ["adam", "eva", "origin"], label: "Tannhaus event" }
+  ],
+  caveStars: [
+    { world: "adam", anchor: 1986, jumps: [1953, 2019], side: "above" },
+    { world: "eva", anchor: 1986, jumps: [2019, 2052], side: "below" }
+  ],
+  welds: [
+    { from: { world: "adam", year: 2020 }, to: { world: "eva", year: 2020 }, label: "apocalypse" }
+  ],
+  branches: [
+    { fromWorld: "origin", fromYear: 1971, newWorld: "paradise" }
+  ],
+  markers: [
+    { world: "adam", year: 2020, color: "#D85A30" },
+    { world: "eva", year: 2020, color: "#D85A30" }
+  ]
+};
+
+const editor = document.getElementById('spec-editor');
+const container = document.getElementById('diagram-container');
+const status = document.getElementById('status');
+
+editor.value = JSON.stringify(DEFAULT_SPEC, null, 2);
+
+const VIEW_W = 760;
+const ROW_HEIGHT = 70;
+const TOP_MARGIN = 50;
+const LEFT_MARGIN = 70;
+const RIGHT_MARGIN = 50;
+const PLOT_W = VIEW_W - LEFT_MARGIN - RIGHT_MARGIN;
+const INTERSECTION_RADIUS = 20;
+const BEND_WIDTH = 50;
+
+function yearToX(year, yearRange) {
+  const [start, end] = yearRange;
+  const t = (year - start) / (end - start);
+  return LEFT_MARGIN + t * PLOT_W;
+}
+
+function rowToY(row) {
+  return TOP_MARGIN + row * ROW_HEIGHT;
+}
+
+function findIntersectionForWorldYear(spec, worldId, year) {
+  for (const inter of (spec.intersections || [])) {
+    if (inter.year === year && inter.worlds.includes(worldId)) {
+      return inter;
+    }
+  }
+  return null;
+}
+
+function getIntersectionY(spec, inter) {
+  const rows = inter.worlds.map(wid => {
+    const w = spec.worlds.find(w => w.id === wid);
+    return w ? w.row : 0;
+  });
+  return rowToY((Math.min(...rows) + Math.max(...rows)) / 2);
+}
+
+function buildWorldPath(spec, world) {
+  const yearRange = spec.yearRange;
+  const intersections = (spec.intersections || [])
+    .filter(i => i.worlds.includes(world.id))
+    .sort((a, b) => a.year - b.year);
+
+  const startYear = world.startYear !== undefined ? world.startYear : yearRange[0];
+  const endYear = world.endYear !== undefined ? world.endYear : yearRange[1];
+
+  const baseY = rowToY(world.row);
+  const segments = [];
+  let cursorX = yearToX(startYear, yearRange);
+  let cursorY = baseY;
+
+  segments.push({ type: 'M', x: cursorX, y: cursorY });
+
+  for (const inter of intersections) {
+    const ix = yearToX(inter.year, yearRange);
+    const iy = getIntersectionY(spec, inter);
+    const bendStart = ix - BEND_WIDTH;
+    const bendEnd = ix + BEND_WIDTH;
+    if (bendStart > cursorX) {
+      segments.push({ type: 'L', x: bendStart, y: baseY });
+    }
+    segments.push({ type: 'L', x: ix, y: iy });
+    segments.push({ type: 'L', x: bendEnd, y: baseY });
+    cursorX = bendEnd;
+    cursorY = baseY;
+  }
+
+  const endX = yearToX(endYear, yearRange);
+  segments.push({ type: 'L', x: endX, y: baseY });
+
+  return segments.map(s => `${s.type} ${s.x.toFixed(1)} ${s.y.toFixed(1)}`).join(' ');
+}
+
+function getWorldYAtYear(spec, world, year) {
+  const yearRange = spec.yearRange;
+  const baseY = rowToY(world.row);
+  const intersections = (spec.intersections || [])
+    .filter(i => i.worlds.includes(world.id))
+    .sort((a, b) => a.year - b.year);
+
+  for (const inter of intersections) {
+    if (Math.abs(year - inter.year) < 0.5) {
+      return getIntersectionY(spec, inter);
+    }
+  }
+  return baseY;
+}
+
+function escapeXml(s) {
+  return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]));
+}
+
+function render(spec) {
+  const yearRange = spec.yearRange;
+  const numRows = Math.max(...spec.worlds.map(w => w.row)) + 1;
+  const VIEW_H = TOP_MARGIN + numRows * ROW_HEIGHT + 80;
+
+  const parts = [];
+  parts.push(`<svg width="100%" viewBox="0 0 ${VIEW_W} ${VIEW_H}" xmlns="http://www.w3.org/2000/svg" role="img">`);
+  parts.push(`<title>Dark timeline diagram</title>`);
+  parts.push(`<desc>Timeline graph generated from JSON spec</desc>`);
+
+  parts.push(`<defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>`);
+
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const textColor = isDark ? '#c2c0b6' : '#3d3d3a';
+  const mutedColor = isDark ? '#888780' : '#73726c';
+
+  parts.push(`<text x="${VIEW_W/2}" y="22" text-anchor="middle" font-family="sans-serif" font-size="13px" font-weight="500" fill="${textColor}">Time →</text>`);
+  parts.push(`<line x1="${LEFT_MARGIN - 20}" y1="32" x2="${VIEW_W - 20}" y2="32" stroke="${mutedColor}" stroke-width="0.5" opacity="0.4"/>`);
+
+  const yearMarks = [];
+  for (let y = Math.ceil(yearRange[0] / 25) * 25; y <= yearRange[1]; y += 25) {
+    yearMarks.push(y);
+  }
+  for (const y of yearMarks) {
+    const x = yearToX(y, yearRange);
+    parts.push(`<line x1="${x}" y1="32" x2="${x}" y2="36" stroke="${mutedColor}" stroke-width="0.5" opacity="0.5"/>`);
+    parts.push(`<text x="${x}" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${mutedColor}">${y}</text>`);
+  }
+
+  for (const inter of (spec.intersections || [])) {
+    const ix = yearToX(inter.year, yearRange);
+    const iy = getIntersectionY(spec, inter);
+    parts.push(`<circle cx="${ix}" cy="${iy}" r="${INTERSECTION_RADIUS}" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>`);
+  }
+
+  for (const world of spec.worlds) {
+    const path = buildWorldPath(spec, world);
+    const weight = world.weight || 1.5;
+    parts.push(`<path d="${path}" fill="none" stroke="${world.color}" stroke-width="${weight}" stroke-linejoin="round" marker-end="url(#arrow)"/>`);
+    const labelX = LEFT_MARGIN - 8;
+    const labelY = rowToY(world.row);
+    parts.push(`<text x="${labelX}" y="${labelY}" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="${world.color}">${escapeXml(world.label)}</text>`);
+  }
+
+  for (const star of (spec.caveStars || [])) {
+    const world = spec.worlds.find(w => w.id === star.world);
+    if (!world) continue;
+    const baseY = rowToY(world.row);
+    const anchorX = yearToX(star.anchor, yearRange);
+    const anchorY = getWorldYAtYear(spec, world, star.anchor);
+    const side = star.side === 'below' ? 1 : -1;
+
+    parts.push(`<circle cx="${anchorX}" cy="${anchorY}" r="4.5" fill="${world.color}" stroke="${world.color}" stroke-width="1"/>`);
+
+    for (const jumpYear of star.jumps) {
+      const jx = yearToX(jumpYear, yearRange);
+      const jy = getWorldYAtYear(spec, world, jumpYear);
+      const dx = jx - anchorX;
+      const arcHeight = Math.min(36, Math.abs(dx) * 0.45);
+      const midX = (anchorX + jx) / 2;
+      const midY = baseY + side * arcHeight;
+      parts.push(`<path d="M ${anchorX} ${anchorY} Q ${midX} ${midY}, ${jx} ${jy}" fill="none" stroke="${world.color}" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>`);
+      parts.push(`<circle cx="${jx}" cy="${jy}" r="3.5" fill="${world.color}"/>`);
+      const labelY = side < 0 ? jy - 10 : jy + 16;
+      parts.push(`<text x="${jx}" y="${labelY}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${mutedColor}">${jumpYear}</text>`);
+    }
+    const anchorLabelY = side < 0 ? anchorY - 10 : anchorY + 16;
+    parts.push(`<text x="${anchorX}" y="${anchorLabelY}" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="${world.color}">${star.anchor}</text>`);
+  }
+
+  for (const weld of (spec.welds || [])) {
+    const fromWorld = spec.worlds.find(w => w.id === weld.from.world);
+    const toWorld = spec.worlds.find(w => w.id === weld.to.world);
+    if (!fromWorld || !toWorld) continue;
+    const fx = yearToX(weld.from.year, yearRange);
+    const fy = getWorldYAtYear(spec, fromWorld, weld.from.year);
+    const tx = yearToX(weld.to.year, yearRange);
+    const ty = getWorldYAtYear(spec, toWorld, weld.to.year);
+    parts.push(`<line x1="${fx}" y1="${fy}" x2="${tx}" y2="${ty}" stroke="#D85A30" stroke-width="2.5"/>`);
+    parts.push(`<circle cx="${fx}" cy="${fy}" r="4" fill="#D85A30"/>`);
+    parts.push(`<circle cx="${tx}" cy="${ty}" r="4" fill="#D85A30"/>`);
+    if (weld.label) {
+      const midX = (fx + tx) / 2;
+      const midY = (fy + ty) / 2;
+      parts.push(`<text x="${midX + 8}" y="${midY}" dominant-baseline="central" font-family="sans-serif" font-size="11px" font-weight="500" fill="#993C1D">${escapeXml(weld.label)}</text>`);
+    }
+  }
+
+  for (const inter of (spec.intersections || [])) {
+    const ix = yearToX(inter.year, yearRange);
+    const iy = getIntersectionY(spec, inter);
+    parts.push(`<circle cx="${ix}" cy="${iy}" r="5" fill="#EF9F27"/>`);
+    if (inter.label) {
+      parts.push(`<text x="${ix}" y="${iy + INTERSECTION_RADIUS + 14}" text-anchor="middle" font-family="sans-serif" font-size="11px" font-weight="500" fill="#854F0B">${escapeXml(inter.label)} (${inter.year})</text>`);
+    }
+  }
+
+  for (const branch of (spec.branches || [])) {
+    const fromWorld = spec.worlds.find(w => w.id === branch.fromWorld);
+    const newWorld = spec.worlds.find(w => w.id === branch.newWorld);
+    if (!fromWorld || !newWorld) continue;
+    const bx = yearToX(branch.fromYear, yearRange);
+    const by = getWorldYAtYear(spec, fromWorld, branch.fromYear);
+    const tx = yearToX(branch.fromYear, yearRange);
+    const ty = rowToY(newWorld.row);
+    parts.push(`<path d="M ${bx} ${by} Q ${bx} ${(by+ty)/2}, ${tx} ${ty}" fill="none" stroke="${newWorld.color}" stroke-width="1.5" stroke-dasharray="4 3"/>`);
+    parts.push(`<circle cx="${bx}" cy="${by}" r="3.5" fill="${newWorld.color}"/>`);
+    parts.push(`<text x="${bx}" y="${by + 16}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${mutedColor}">${branch.fromYear}</text>`);
+  }
+
+  for (const marker of (spec.markers || [])) {
+    const world = spec.worlds.find(w => w.id === marker.world);
+    if (!world) continue;
+    const mx = yearToX(marker.year, yearRange);
+    const my = getWorldYAtYear(spec, world, marker.year);
+    const color = marker.color || world.color;
+    parts.push(`<circle cx="${mx}" cy="${my}" r="4" fill="${color}"/>`);
+    if (marker.label) {
+      parts.push(`<text x="${mx}" y="${my - 10}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${color}">${escapeXml(marker.label)}</text>`);
+    }
+  }
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+function doRender() {
+  try {
+    const spec = JSON.parse(editor.value);
+    const svg = render(spec);
+    container.innerHTML = svg;
+    status.textContent = 'Rendered';
+    status.style.color = 'var(--color-text-success)';
+    setTimeout(() => { status.textContent = ''; }, 1500);
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--color-text-danger)';
+  }
+}
+
+document.getElementById('btn-render').addEventListener('click', doRender);
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  editor.value = JSON.stringify(DEFAULT_SPEC, null, 2);
+  doRender();
+});
+
+document.getElementById('btn-download-svg').addEventListener('click', () => {
+  try {
+    const spec = JSON.parse(editor.value);
+    const svg = render(spec);
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dark-timeline.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--color-text-danger)';
+  }
+});
+
+document.getElementById('btn-download-json').addEventListener('click', () => {
+  const blob = new Blob([editor.value], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dark-timeline.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+editor.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    doRender();
+  }
+});
+
+doRender();
+</script>

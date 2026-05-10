@@ -1,0 +1,97 @@
+{
+  "yearRange": [
+    1880,
+    2060
+  ],
+  "worlds": [
+    {
+      "id": "adam",
+      "label": "Adam",
+      "color": "#378ADD",
+      "row": 0
+    },
+    {
+      "id": "eva",
+      "label": "Eva",
+      "color": "#D4537E",
+      "row": 1
+    },
+    {
+      "id": "origin",
+      "label": "Origin",
+      "color": "#888780",
+      "row": 2,
+      "weight": 2
+    },
+    {
+      "id": "paradise",
+      "label": "Paradise",
+      "color": "#1D9E75",
+      "row": 3,
+      "startYear": 1971
+    }
+  ],
+  "intersections": [
+    {
+      "year": 1986,
+      "worlds": [
+        "adam",
+        "eva",
+        "origin"
+      ],
+      "label": "Tannhaus event"
+    }
+  ],
+  "caveStars": [
+    {
+      "world": "adam",
+      "anchor": 1986,
+      "jumps": [
+        1953,
+        2019
+      ],
+      "side": "above"
+    },
+    {
+      "world": "eva",
+      "anchor": 1986,
+      "jumps": [
+        2019,
+        2052
+      ],
+      "side": "below"
+    }
+  ],
+  "welds": [
+    {
+      "from": {
+        "world": "adam",
+        "year": 2020
+      },
+      "to": {
+        "world": "eva",
+        "year": 2020
+      },
+      "label": "apocalypse"
+    }
+  ],
+  "branches": [
+    {
+      "fromWorld": "origin",
+      "fromYear": 1971,
+      "newWorld": "paradise"
+    }
+  ],
+  "markers": [
+    {
+      "world": "adam",
+      "year": 2020,
+      "color": "#D85A30"
+    },
+    {
+      "world": "eva",
+      "year": 2020,
+      "color": "#D85A30"
+    }
+  ]
+}
