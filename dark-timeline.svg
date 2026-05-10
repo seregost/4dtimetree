@@ -23,39 +23,56 @@
 <line x1="674.4444444444445" y1="32" x2="674.4444444444445" y2="36" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
 <text x="674.4444444444445" y="46" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2050</text>
 <circle cx="446.8888888888889" cy="120" r="20" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>
-<path d="M 70.0 50.0 L 396.9 50.0 L 446.9 120.0 L 496.9 50.0 L 710.0 50.0" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="62" y="50" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#378ADD">Adam</text>
-<path d="M 70.0 120.0 L 396.9 120.0 L 446.9 120.0 L 496.9 120.0 L 710.0 120.0" fill="none" stroke="#D4537E" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="62" y="120" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#D4537E">Eva</text>
-<path d="M 70.0 190.0 L 396.9 190.0 L 446.9 120.0 L 496.9 190.0 L 710.0 190.0" fill="none" stroke="#888780" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<circle cx="215.77777777777777" cy="120" r="12" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>
+<circle cx="638.8888888888889" cy="50" r="12" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>
+<circle cx="685.1111111111111" cy="120" r="12" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>
+<path d="M 70.0 50.0 L 393.9 50.0 C 428.3 50.0, 441.6 120.0, 446.9 120.0 C 452.2 120.0, 465.4 50.0, 499.9 50.0 L 710.0 50.0" fill="none" stroke="#D4537E" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="62" y="50" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#D4537E">Eva</text>
+<path d="M 70.0 120.0 L 393.9 120.0 C 428.3 120.0, 441.6 120.0, 446.9 120.0 C 452.2 120.0, 465.4 120.0, 499.9 120.0 L 710.0 120.0" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="62" y="120" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#378ADD">Adam</text>
+<path d="M 70.0 190.0 L 393.9 190.0 C 428.3 190.0, 441.6 120.0, 446.9 120.0" fill="none" stroke="#888780" stroke-width="2" stroke-linejoin="round"/>
 <text x="62" y="190" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#888780">Origin</text>
-<path d="M 393.6 260.0 L 710.0 260.0" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 393.6 190.0 C 398.9 190.0, 428.0 260.0, 446.6 260.0 L 710.0 260.0" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
 <text x="62" y="260" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="#1D9E75">Paradise</text>
-<circle cx="446.8888888888889" cy="120" r="4.5" fill="#378ADD" stroke="#378ADD" stroke-width="1"/>
-<path d="M 446.8888888888889 120 Q 388.22222222222223 14, 329.55555555555554 50" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
-<circle cx="329.55555555555554" cy="50" r="3.5" fill="#378ADD"/>
-<text x="329.55555555555554" y="40" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1953</text>
-<path d="M 446.8888888888889 120 Q 505.55555555555554 14, 564.2222222222222 50" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
-<circle cx="564.2222222222222" cy="50" r="3.5" fill="#378ADD"/>
-<text x="564.2222222222222" y="40" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2019</text>
-<text x="446.8888888888889" y="110" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="#378ADD">1986</text>
-<circle cx="446.8888888888889" cy="120" r="4.5" fill="#D4537E" stroke="#D4537E" stroke-width="1"/>
-<path d="M 446.8888888888889 120 Q 505.55555555555554 156, 564.2222222222222 120" fill="none" stroke="#D4537E" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
-<circle cx="564.2222222222222" cy="120" r="3.5" fill="#D4537E"/>
+<line x1="98.4" y1="120.0" x2="215.8" y2="120.0" stroke="#378ADD" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+<text x="157.1" y="134.0" text-anchor="middle" font-family="sans-serif" font-size="9px" font-style="italic" fill="#378ADD" opacity="0.8">Sic Mundus</text>
+<line x1="567.8" y1="120.0" x2="685.1" y2="120.0" stroke="#378ADD" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+<text x="626.4" y="134.0" text-anchor="middle" font-family="sans-serif" font-size="9px" font-style="italic" fill="#378ADD" opacity="0.8">Post-Apocalypse</text>
+<line x1="567.8" y1="50.0" x2="681.6" y2="50.0" stroke="#D4537E" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+<text x="624.7" y="64.0" text-anchor="middle" font-family="sans-serif" font-size="9px" font-style="italic" fill="#D4537E" opacity="0.8">Erit Lux</text>
+<path d="M 446.8888888888889 120 Q 388.22222222222223 156, 329.55555555555554 120" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<line x1="329.55555555555554" y1="115" x2="329.55555555555554" y2="125" stroke="#378ADD" stroke-width="2" stroke-linecap="round"/>
+<text x="329.55555555555554" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1953</text>
+<path d="M 446.8888888888889 120 Q 505.55555555555554 156, 564.2222222222222 120" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<line x1="564.2222222222222" y1="115" x2="564.2222222222222" y2="125" stroke="#378ADD" stroke-width="2" stroke-linecap="round"/>
 <text x="564.2222222222222" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2019</text>
-<path d="M 446.8888888888889 120 Q 564.2222222222222 156, 681.5555555555555 120" fill="none" stroke="#D4537E" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
-<circle cx="681.5555555555555" cy="120" r="3.5" fill="#D4537E"/>
-<text x="681.5555555555555" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2052</text>
-<text x="446.8888888888889" y="136" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="#D4537E">1986</text>
-<line x1="567.7777777777778" y1="50" x2="567.7777777777778" y2="120" stroke="#D85A30" stroke-width="2.5"/>
-<circle cx="567.7777777777778" cy="50" r="4" fill="#D85A30"/>
-<circle cx="567.7777777777778" cy="120" r="4" fill="#D85A30"/>
-<text x="575.7777777777778" y="85" dominant-baseline="central" font-family="sans-serif" font-size="11px" font-weight="500" fill="#993C1D">apocalypse</text>
-<circle cx="446.8888888888889" cy="120" r="5" fill="#EF9F27"/>
-<text x="446.8888888888889" y="154" text-anchor="middle" font-family="sans-serif" font-size="11px" font-weight="500" fill="#854F0B">Tannhaus event (1986)</text>
-<path d="M 393.55555555555554 190 Q 393.55555555555554 225, 393.55555555555554 260" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="4 3"/>
-<circle cx="393.55555555555554" cy="190" r="3.5" fill="#1D9E75"/>
+<circle cx="567.7777777777778" cy="120" r="3.5" fill="none" stroke="#378ADD" stroke-width="1.5"/>
+<text x="567.7777777777778" y="110" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="#378ADD">2020</text>
+<path d="M 567.7777777777778 120 Q 626.4444444444445 84, 685.1111111111111 120" fill="none" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<text x="685.1111111111111" y="110" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2053</text>
+<path d="M 446.8888888888889 120 Q 505.55555555555554 86, 564.2222222222222 50" fill="none" stroke="#D4537E" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<line x1="564.2222222222222" y1="45" x2="564.2222222222222" y2="55" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+<text x="564.2222222222222" y="66" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2019</text>
+<path d="M 446.8888888888889 120 Q 564.2222222222222 86, 681.5555555555555 50" fill="none" stroke="#D4537E" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<line x1="681.5555555555555" y1="45" x2="681.5555555555555" y2="55" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+<text x="681.5555555555555" y="66" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">2052</text>
+<path d="M 446.8888888888889 120 Q 420.22222222222223 214.00000000000003, 393.55555555555554 190" fill="none" stroke="#888780" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>
+<circle cx="393.55555555555554" cy="190" r="3.5" fill="none" stroke="#888780" stroke-width="1.5"/>
 <text x="393.55555555555554" y="206" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#888780">1971</text>
-<circle cx="567.7777777777778" cy="50" r="4" fill="#D85A30"/>
-<circle cx="567.7777777777778" cy="120" r="4" fill="#D85A30"/>
+<line x1="567.7777777777778" y1="120" x2="564.2222222222222" y2="50" stroke="#D85A30" stroke-width="2.5"/>
+<text x="574" y="85" dominant-baseline="central" font-family="sans-serif" font-size="11px" font-weight="500" fill="#993C1D">Apocalypse</text>
+<circle cx="446.8888888888889" cy="120" r="5" fill="#EF9F27"/>
+<text x="446.8888888888889" y="154" text-anchor="middle" font-family="sans-serif" font-size="11px" font-weight="500" fill="#854F0B">Tannhaus Event (1986)</text>
+<circle cx="215.77777777777777" cy="120" r="3.5" fill="#EF9F27"/>
+<text x="215.77777777777777" y="144" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#854F0B">Portal (1921)</text>
+<circle cx="638.8888888888889" cy="50" r="3.5" fill="#EF9F27"/>
+<text x="638.8888888888889" y="74" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#854F0B">Portal (2040)</text>
+<circle cx="685.1111111111111" cy="120" r="3.5" fill="#EF9F27"/>
+<text x="685.1111111111111" y="144" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#854F0B">Portal (2053)</text>
+<circle cx="98.44444444444444" cy="120" r="4" fill="#D85A30"/>
+<circle cx="155.33333333333331" cy="120" r="4" fill="#D85A30"/>
+<circle cx="176.66666666666666" cy="120" r="4" fill="#D85A30"/>
+<circle cx="404.22222222222223" cy="190" r="4" fill="#D85A30"/>
+<circle cx="638.8888888888889" cy="120" r="4" fill="#D85A30"/>
+<circle cx="564.2222222222222" cy="260" r="4" fill="#D85A30"/>
 </svg>

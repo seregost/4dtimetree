@@ -27,9 +27,12 @@
 <p style="margin: 0 0 8px;"><code>worlds</code>: array of timelines. Each has <code>id</code>, <code>label</code>, <code>color</code>, <code>row</code> (vertical slot, 0=top).</p>
 <p style="margin: 0 0 8px;"><code>yearRange</code>: <code>[startYear, endYear]</code> defines the x-axis time span.</p>
 <p style="margin: 0 0 8px;"><code>intersections</code>: array of convergence points. Each has <code>year</code> and <code>worlds</code> (list of world ids that meet there). Worlds bend toward a shared y at this year.</p>
-<p style="margin: 0 0 8px;"><code>caveStars</code>: array of intra-world wormholes. Each has <code>world</code>, <code>anchor</code> (year), <code>jumps</code> (list of years).</p>
+<p style="margin: 0 0 8px;"><code>wormholes</code>: array of intra-world wormholes. Each has <code>world</code>, <code>anchor</code> (year), <code>jumps</code> (list of years), <code>side</code> ("above"/"below"), optional <code>window: { open, close }</code> (ISO date strings). Without <code>window</code>: point connection, dot endpoints. With <code>window</code>: temporal window, bracket endpoints (I-beam). The window dates apply simultaneously at the anchor and all jump years. Anchor marker is suppressed when it coincides with an intersection.</p>
 <p style="margin: 0 0 8px;"><code>welds</code>: array of cross-world bridges. Each has <code>from: {world, year}</code>, <code>to: {world, year}</code>, optional <code>label</code>.</p>
 <p style="margin: 0 0 8px;"><code>branches</code>: array of new timelines that emerge from another. Each has <code>fromWorld</code>, <code>fromYear</code>, <code>newWorld</code> (id of the resulting world, must exist in worlds), and the new world's first year is set by its branch point.</p>
+<p style="margin: 0 0 8px;"><code>worlds[].divergeFrom</code>: optional <code>{ world, year }</code>. When set, the world's path begins at the source world's y-position at that year and curves asymptotically down to its own row, modeling a fork rather than an independent start.</p>
+<p style="margin: 0 0 8px;"><code>nodes</code>: array of single-world stable events (e.g. God Particles). Each has <code>world</code>, <code>year</code>, optional <code>label</code>. Renders identically to an intersection (amber dot + dashed ring) but on a single worldline without bending others. Wormhole endpoint markers are suppressed when a node occupies the same position.</p>
+<p style="margin: 0 0 8px;"><code>segments</code>: array of highlighted time spans on a worldline. Each has <code>world</code>, <code>from</code>, <code>to</code> (years), optional <code>label</code>, optional <code>labelSide</code> ("above"/"below", default "below"). Renders as a semi-transparent thick band over the worldline with an italic label — use for periods where significant time passes or characters age.</p>
 <p style="margin: 0;"><code>markers</code>: array of named events. Each has <code>world</code>, <code>year</code>, <code>label</code>, optional <code>color</code>.</p>
 </div>
 </details>
@@ -40,27 +43,42 @@
 const DEFAULT_SPEC = {
   yearRange: [1880, 2060],
   worlds: [
-    { id: "adam", label: "Adam", color: "#378ADD", row: 0 },
-    { id: "eva", label: "Eva", color: "#D4537E", row: 1 },
-    { id: "origin", label: "Origin", color: "#888780", row: 2, weight: 2 },
-    { id: "paradise", label: "Paradise", color: "#1D9E75", row: 3, startYear: 1971 }
+    { id: "eva", label: "Eva", color: "#D4537E", row: 0 },
+    { id: "adam", label: "Adam", color: "#378ADD", row: 1 },
+    { id: "origin", label: "Origin", color: "#888780", row: 2, weight: 2, endYear: 1986 },
+    { id: "paradise", label: "Paradise", color: "#1D9E75", row: 3, divergeFrom: { world: "origin", year: 1971 } }
   ],
   intersections: [
-    { year: 1986, worlds: ["adam", "eva", "origin"], label: "Tannhaus event" }
+    { year: 1986, worlds: ["adam", "eva", "origin"], label: "Tannhaus Event" }
   ],
-  caveStars: [
-    { world: "adam", anchor: 1986, jumps: [1953, 2019], side: "above" },
-    { world: "eva", anchor: 1986, jumps: [2019, 2052], side: "below" }
+  wormholes: [
+    { world: "adam", anchor: 1986, jumps: [1953, 2019], side: "below",
+      window: { open: "1986-06-21", close: "1986-11-12" } },
+    { world: "adam", anchor: 2020, jumps: [2053], side: "above" },
+    { world: "eva", anchor: 1986, jumps: [2019, 2052], side: "below",
+      window: { open: "1986-06-21", close: "1986-11-08" } },
+    { world: "origin", anchor: 1986, jumps: [1971], side: "below" }
+  ],
+  segments: [
+    { world: "adam", from: 1888, to: 1921, label: "Sic Mundus" },
+    { world: "adam", from: 2020, to: 2053, label: "Post-Apocalypse" },
+    { world: "eva",  from: 2020, to: 2052, label: "Erit Lux" }
   ],
   welds: [
-    { from: { world: "adam", year: 2020 }, to: { world: "eva", year: 2020 }, label: "apocalypse" }
+    { from: { world: "adam", year: 2020 }, to: { world: "eva", year: 2019 }, label: "Apocalypse" }
   ],
-  branches: [
-    { fromWorld: "origin", fromYear: 1971, newWorld: "paradise" }
+  nodes: [
+    { world: "adam", year: 1921, label: "Portal" },
+    { world: "eva", year: 2040, label: "Portal" },
+    { world: "adam", year: 2053, label: "Portal" }
   ],
   markers: [
-    { world: "adam", year: 2020, color: "#D85A30" },
-    { world: "eva", year: 2020, color: "#D85A30" }
+    { world: "adam", year: 1888, color: "#D85A30" },
+    { world: "adam", year: 1904, color: "#D85A30" },
+    { world: "adam", year: 1910, color: "#D85A30" },
+    { world: "origin", year: 1974, color: "#D85A30" },
+    { world: "adam", year: 2040, color: "#D85A30" },
+    { world: "paradise", year: 2019, color: "#D85A30" }
   ]
 };
 
@@ -77,7 +95,8 @@ const LEFT_MARGIN = 70;
 const RIGHT_MARGIN = 50;
 const PLOT_W = VIEW_W - LEFT_MARGIN - RIGHT_MARGIN;
 const INTERSECTION_RADIUS = 20;
-const BEND_WIDTH = 50;
+const NODE_RADIUS = 12;
+const BEND_WIDTH = 53;
 
 function yearToX(year, yearRange) {
   const [start, end] = yearRange;
@@ -106,40 +125,82 @@ function getIntersectionY(spec, inter) {
   return rowToY((Math.min(...rows) + Math.max(...rows)) / 2);
 }
 
+function worldTerminatesAtIntersection(spec, world) {
+  const endYear = world.endYear;
+  if (endYear === undefined) return false;
+  return (spec.intersections || []).some(i => i.year === endYear && i.worlds.includes(world.id));
+}
+
 function buildWorldPath(spec, world) {
   const yearRange = spec.yearRange;
   const intersections = (spec.intersections || [])
     .filter(i => i.worlds.includes(world.id))
     .sort((a, b) => a.year - b.year);
 
-  const startYear = world.startYear !== undefined ? world.startYear : yearRange[0];
+  const startYear = world.startYear !== undefined ? world.startYear
+    : world.divergeFrom ? world.divergeFrom.year
+    : yearRange[0];
   const endYear = world.endYear !== undefined ? world.endYear : yearRange[1];
+  const terminal = worldTerminatesAtIntersection(spec, world);
 
   const baseY = rowToY(world.row);
-  const segments = [];
+  const parts = [];
   let cursorX = yearToX(startYear, yearRange);
-  let cursorY = baseY;
 
-  segments.push({ type: 'M', x: cursorX, y: cursorY });
+  // divergeFrom: start at the source world's y and curve asymptotically to this world's row
+  if (world.divergeFrom) {
+    const srcWorld = spec.worlds.find(w => w.id === world.divergeFrom.world);
+    const fromY = srcWorld ? rowToY(srcWorld.row) : baseY;
+    parts.push(`M ${cursorX.toFixed(1)} ${fromY.toFixed(1)}`);
+    const endDivX = cursorX + BEND_WIDTH;
+    const cp1x = cursorX + BEND_WIDTH * 0.1;
+    const cp2x = cursorX + BEND_WIDTH * 0.65;
+    parts.push(`C ${cp1x.toFixed(1)} ${fromY.toFixed(1)}, ${cp2x.toFixed(1)} ${baseY.toFixed(1)}, ${endDivX.toFixed(1)} ${baseY.toFixed(1)}`);
+    cursorX = endDivX;
+  } else {
+    parts.push(`M ${cursorX.toFixed(1)} ${baseY.toFixed(1)}`);
+  }
 
-  for (const inter of intersections) {
+  for (let i = 0; i < intersections.length; i++) {
+    const inter = intersections[i];
     const ix = yearToX(inter.year, yearRange);
     const iy = getIntersectionY(spec, inter);
     const bendStart = ix - BEND_WIDTH;
     const bendEnd = ix + BEND_WIDTH;
-    if (bendStart > cursorX) {
-      segments.push({ type: 'L', x: bendStart, y: baseY });
+    const isTerminalHere = terminal && i === intersections.length - 1;
+
+    // Straight segment up to the start of the approach curve
+    const approachStartX = Math.max(cursorX, bendStart);
+    if (approachStartX > cursorX) {
+      parts.push(`L ${approachStartX.toFixed(1)} ${baseY.toFixed(1)}`);
     }
-    segments.push({ type: 'L', x: ix, y: iy });
-    segments.push({ type: 'L', x: bendEnd, y: baseY });
+
+    // Cubic Bézier approach: stay near baseY for ~65% of span, then sweep to iy
+    const dx = ix - approachStartX;
+    if (dx > 1) {
+      const cp1x = approachStartX + dx * 0.65;
+      const cp2x = ix - dx * 0.1;
+      parts.push(`C ${cp1x.toFixed(1)} ${baseY.toFixed(1)}, ${cp2x.toFixed(1)} ${iy.toFixed(1)}, ${ix.toFixed(1)} ${iy.toFixed(1)}`);
+    } else {
+      parts.push(`L ${ix.toFixed(1)} ${iy.toFixed(1)}`);
+    }
+
+    if (isTerminalHere) break;
+
+    // Cubic Bézier departure: mirror of approach
+    const dx2 = bendEnd - ix;
+    const cp3x = ix + dx2 * 0.1;
+    const cp4x = bendEnd - dx2 * 0.65;
+    parts.push(`C ${cp3x.toFixed(1)} ${iy.toFixed(1)}, ${cp4x.toFixed(1)} ${baseY.toFixed(1)}, ${bendEnd.toFixed(1)} ${baseY.toFixed(1)}`);
     cursorX = bendEnd;
-    cursorY = baseY;
   }
 
   const endX = yearToX(endYear, yearRange);
-  segments.push({ type: 'L', x: endX, y: baseY });
+  if (!terminal && cursorX < endX) {
+    parts.push(`L ${endX.toFixed(1)} ${baseY.toFixed(1)}`);
+  }
 
-  return segments.map(s => `${s.type} ${s.x.toFixed(1)} ${s.y.toFixed(1)}`).join(' ');
+  return parts.join(' ');
 }
 
 function getWorldYAtYear(spec, world, year) {
@@ -200,26 +261,75 @@ function render(spec) {
     parts.push(`<circle cx="${ix}" cy="${iy}" r="${INTERSECTION_RADIUS}" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>`);
   }
 
+  for (const node of (spec.nodes || [])) {
+    const world = spec.worlds.find(w => w.id === node.world);
+    if (!world) continue;
+    const nx = yearToX(node.year, yearRange);
+    const ny = getWorldYAtYear(spec, world, node.year);
+    parts.push(`<circle cx="${nx}" cy="${ny}" r="${NODE_RADIUS}" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>`);
+  }
+
   for (const world of spec.worlds) {
     const path = buildWorldPath(spec, world);
     const weight = world.weight || 1.5;
-    parts.push(`<path d="${path}" fill="none" stroke="${world.color}" stroke-width="${weight}" stroke-linejoin="round" marker-end="url(#arrow)"/>`);
+    const terminated = worldTerminatesAtIntersection(spec, world);
+    const arrowAttr = terminated ? '' : ' marker-end="url(#arrow)"';
+    parts.push(`<path d="${path}" fill="none" stroke="${world.color}" stroke-width="${weight}" stroke-linejoin="round"${arrowAttr}/>`);
     const labelX = LEFT_MARGIN - 8;
     const labelY = rowToY(world.row);
     parts.push(`<text x="${labelX}" y="${labelY}" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="13px" font-weight="500" fill="${world.color}">${escapeXml(world.label)}</text>`);
   }
 
-  for (const star of (spec.caveStars || [])) {
-    const world = spec.worlds.find(w => w.id === star.world);
+  for (const seg of (spec.segments || [])) {
+    const world = spec.worlds.find(w => w.id === seg.world);
+    if (!world) continue;
+    const x1 = yearToX(seg.from, yearRange);
+    const x2 = yearToX(seg.to, yearRange);
+    const y1 = getWorldYAtYear(spec, world, seg.from);
+    const y2 = getWorldYAtYear(spec, world, seg.to);
+    // Thick band overlay on the worldline
+    parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${world.color}" stroke-width="5" stroke-linecap="round" opacity="0.35"/>`);
+    if (seg.label) {
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      const above = seg.labelSide === 'above';
+      const labelY = above ? midY - 10 : midY + 14;
+      parts.push(`<text x="${midX.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="9px" font-style="italic" fill="${world.color}" opacity="0.8">${escapeXml(seg.label)}</text>`);
+    }
+  }
+
+  function drawTick(cx, cy, color) {
+    // Single vertical tick: honest representation of a sub-pixel temporal window
+    parts.push(`<line x1="${cx}" y1="${cy - 5}" x2="${cx}" y2="${cy + 5}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`);
+  }
+
+  function drawOpenRing(cx, cy, color) {
+    // Open circle: precise point-in-time connection
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="3.5" fill="none" stroke="${color}" stroke-width="1.5"/>`);
+  }
+
+  for (const wormhole of (spec.wormholes || [])) {
+    const world = spec.worlds.find(w => w.id === wormhole.world);
     if (!world) continue;
     const baseY = rowToY(world.row);
-    const anchorX = yearToX(star.anchor, yearRange);
-    const anchorY = getWorldYAtYear(spec, world, star.anchor);
-    const side = star.side === 'below' ? 1 : -1;
+    const anchorX = yearToX(wormhole.anchor, yearRange);
+    const anchorY = getWorldYAtYear(spec, world, wormhole.anchor);
+    const side = wormhole.side === 'below' ? 1 : -1;
+    const isWindowed = !!wormhole.window;
 
-    parts.push(`<circle cx="${anchorX}" cy="${anchorY}" r="4.5" fill="${world.color}" stroke="${world.color}" stroke-width="1"/>`);
+    // Anchor marker (skip if at intersection — the amber dot already marks it)
+    const anchorAtIntersection = findIntersectionForWorldYear(spec, world.id, wormhole.anchor);
+    if (!anchorAtIntersection) {
+      if (isWindowed) {
+        drawTick(anchorX, anchorY, world.color);
+      } else {
+        drawOpenRing(anchorX, anchorY, world.color);
+      }
+      const anchorLabelY = side < 0 ? anchorY - 10 : anchorY + 16;
+      parts.push(`<text x="${anchorX}" y="${anchorLabelY}" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="${world.color}">${wormhole.anchor}</text>`);
+    }
 
-    for (const jumpYear of star.jumps) {
+    for (const jumpYear of wormhole.jumps) {
       const jx = yearToX(jumpYear, yearRange);
       const jy = getWorldYAtYear(spec, world, jumpYear);
       const dx = jx - anchorX;
@@ -227,12 +337,17 @@ function render(spec) {
       const midX = (anchorX + jx) / 2;
       const midY = baseY + side * arcHeight;
       parts.push(`<path d="M ${anchorX} ${anchorY} Q ${midX} ${midY}, ${jx} ${jy}" fill="none" stroke="${world.color}" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>`);
-      parts.push(`<circle cx="${jx}" cy="${jy}" r="3.5" fill="${world.color}"/>`);
+      const jumpAtNode = (spec.nodes || []).some(n => n.world === wormhole.world && n.year === jumpYear);
+      if (!jumpAtNode) {
+        if (isWindowed) {
+          drawTick(jx, jy, world.color);
+        } else {
+          drawOpenRing(jx, jy, world.color);
+        }
+      }
       const labelY = side < 0 ? jy - 10 : jy + 16;
       parts.push(`<text x="${jx}" y="${labelY}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${mutedColor}">${jumpYear}</text>`);
     }
-    const anchorLabelY = side < 0 ? anchorY - 10 : anchorY + 16;
-    parts.push(`<text x="${anchorX}" y="${anchorLabelY}" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="${world.color}">${star.anchor}</text>`);
   }
 
   for (const weld of (spec.welds || [])) {
@@ -244,8 +359,6 @@ function render(spec) {
     const tx = yearToX(weld.to.year, yearRange);
     const ty = getWorldYAtYear(spec, toWorld, weld.to.year);
     parts.push(`<line x1="${fx}" y1="${fy}" x2="${tx}" y2="${ty}" stroke="#D85A30" stroke-width="2.5"/>`);
-    parts.push(`<circle cx="${fx}" cy="${fy}" r="4" fill="#D85A30"/>`);
-    parts.push(`<circle cx="${tx}" cy="${ty}" r="4" fill="#D85A30"/>`);
     if (weld.label) {
       const midX = (fx + tx) / 2;
       const midY = (fy + ty) / 2;
@@ -262,17 +375,45 @@ function render(spec) {
     }
   }
 
+  for (const node of (spec.nodes || [])) {
+    const world = spec.worlds.find(w => w.id === node.world);
+    if (!world) continue;
+    const nx = yearToX(node.year, yearRange);
+    const ny = getWorldYAtYear(spec, world, node.year);
+    parts.push(`<circle cx="${nx}" cy="${ny}" r="3.5" fill="#EF9F27"/>`);
+    if (node.label) {
+      parts.push(`<text x="${nx}" y="${ny + NODE_RADIUS + 12}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="#854F0B">${escapeXml(node.label)} (${node.year})</text>`);
+    }
+  }
+
   for (const branch of (spec.branches || [])) {
     const fromWorld = spec.worlds.find(w => w.id === branch.fromWorld);
     const newWorld = spec.worlds.find(w => w.id === branch.newWorld);
     if (!fromWorld || !newWorld) continue;
     const bx = yearToX(branch.fromYear, yearRange);
-    const by = getWorldYAtYear(spec, fromWorld, branch.fromYear);
-    const tx = yearToX(branch.fromYear, yearRange);
-    const ty = rowToY(newWorld.row);
-    parts.push(`<path d="M ${bx} ${by} Q ${bx} ${(by+ty)/2}, ${tx} ${ty}" fill="none" stroke="${newWorld.color}" stroke-width="1.5" stroke-dasharray="4 3"/>`);
-    parts.push(`<circle cx="${bx}" cy="${by}" r="3.5" fill="${newWorld.color}"/>`);
-    parts.push(`<text x="${bx}" y="${by + 16}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${mutedColor}">${branch.fromYear}</text>`);
+    const by = rowToY(fromWorld.row);
+
+    // Find the first intersection on fromWorld after fromYear — the causal source of the branch
+    const causingInter = (spec.intersections || [])
+      .filter(i => i.worlds.includes(branch.fromWorld) && i.year > branch.fromYear)
+      .sort((a, b) => a.year - b.year)[0];
+
+    if (causingInter) {
+      const ix = yearToX(causingInter.year, yearRange);
+      const iy = getIntersectionY(spec, causingInter);
+      const below = newWorld.row > fromWorld.row;
+      const midX = (ix + bx) / 2;
+      const span = Math.abs(ix - bx);
+      const arcHeight = Math.min(36, span * 0.45);
+      const midY = Math.max(iy, by) + (below ? arcHeight : -arcHeight);
+      parts.push(`<path d="M ${ix.toFixed(1)} ${iy.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)}, ${bx.toFixed(1)} ${by.toFixed(1)}" fill="none" stroke="${newWorld.color}" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>`);
+    } else {
+      const ty = rowToY(newWorld.row);
+      parts.push(`<path d="M ${bx.toFixed(1)} ${by.toFixed(1)} Q ${bx.toFixed(1)} ${((by+ty)/2).toFixed(1)}, ${bx.toFixed(1)} ${ty.toFixed(1)}" fill="none" stroke="${newWorld.color}" stroke-width="1.5" stroke-dasharray="4 3"/>`);
+    }
+
+    parts.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="3.5" fill="${newWorld.color}"/>`);
+    parts.push(`<text x="${bx.toFixed(1)}" y="${(by + 16).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="10px" fill="${mutedColor}">${branch.fromYear}</text>`);
   }
 
   for (const marker of (spec.markers || [])) {
@@ -312,20 +453,29 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   doRender();
 });
 
-document.getElementById('btn-download-svg').addEventListener('click', () => {
+let svgFileHandle = null;
+
+document.getElementById('btn-download-svg').addEventListener('click', async () => {
   try {
     const spec = JSON.parse(editor.value);
     const svg = render(spec);
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'dark-timeline.svg';
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!svgFileHandle) {
+      svgFileHandle = await window.showSaveFilePicker({
+        suggestedName: 'dark-timeline.svg',
+        types: [{ description: 'SVG Image', accept: { 'image/svg+xml': ['.svg'] } }]
+      });
+    }
+    const writable = await svgFileHandle.createWritable();
+    await writable.write(svg);
+    await writable.close();
+    status.textContent = 'Saved → ' + svgFileHandle.name;
+    status.style.color = 'var(--color-text-success)';
+    setTimeout(() => { status.textContent = ''; }, 2000);
   } catch (e) {
-    status.textContent = 'Error: ' + e.message;
-    status.style.color = 'var(--color-text-danger)';
+    if (e.name !== 'AbortError') {
+      status.textContent = 'Error: ' + e.message;
+      status.style.color = 'var(--color-text-danger)';
+    }
   }
 });
 
