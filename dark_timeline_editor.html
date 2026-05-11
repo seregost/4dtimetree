@@ -4,278 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dark — Timeline of Worlds</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg-page:       #09090d;
-      --bg-surface:    #141418;
-      --border-subtle: rgba(255, 255, 255, 0.055);
-      --border-accent: rgba(200, 169, 81, 0.16);
-      --text-primary:  #dddbd3;
-      --text-muted:    #4e4c46;
-      --amber:         #C8A951;
-    }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
-    body {
-      background: var(--bg-page);
-      color: var(--text-primary);
-      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ── Header ── */
-    header {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-      height: 50px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .brand-title {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 7px;
-      color: #ffffff;
-      text-transform: uppercase;
-    }
-
-    .brand-sep {
-      width: 1px;
-      height: 14px;
-      background: var(--border-subtle);
-      flex-shrink: 0;
-    }
-
-    .brand-sub {
-      font-size: 9.5px;
-      letter-spacing: 2.5px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-    }
-
-    /* ── Toolbar ── */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    #status {
-      font-size: 10px;
-      letter-spacing: 0.6px;
-      color: var(--amber);
-      opacity: 0;
-      transition: opacity 0.25s;
-    }
-
-    #status.show { opacity: 1; }
-
-    .btn {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border-subtle);
-      padding: 5px 14px;
-      border-radius: 2px;
-      font-size: 10px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: color 0.12s, border-color 0.12s, background 0.12s;
-    }
-
-    .btn:hover {
-      color: var(--amber);
-      border-color: rgba(200, 169, 81, 0.3);
-      background: rgba(200, 169, 81, 0.04);
-    }
-
-    /* ── Main area ── */
-    main {
-      flex: 1;
-      min-height: 0;
-      padding: 18px 24px 22px;
-      display: flex;
-      flex-direction: row;
-      gap: 12px;
-      align-items: stretch;
-    }
-
-    /* Outer frame — fills remaining height, clips SVG overflow at bottom */
-    .diagram-frame {
-      flex: 1;
-      min-height: 0;
-      position: relative;
-      border: 1px solid var(--border-accent);
-      border-radius: 2px;
-      background: var(--bg-surface);
-      overflow: hidden;
-    }
-
-    /* ── Travel sidebar ── */
-    .travel-sidebar {
-      width: 320px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid var(--border-accent);
-      border-radius: 2px;
-      background: var(--bg-surface);
-      overflow: hidden;
-    }
-
-    .travel-sidebar-header {
-      flex-shrink: 0;
-      padding: 10px 16px 9px;
-      font-size: 18px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .travel-sidebar-body {
-      flex: 1;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(200,169,81,0.22) transparent;
-    }
-
-    .travel-sidebar-body::-webkit-scrollbar { width: 4px; }
-    .travel-sidebar-body::-webkit-scrollbar-track { background: transparent; }
-    .travel-sidebar-body::-webkit-scrollbar-thumb { background: rgba(200,169,81,0.22); border-radius: 2px; }
-    .travel-sidebar-body::-webkit-scrollbar-thumb:hover { background: rgba(200,169,81,0.45); }
-
-    .travel-group {
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 8px 0 4px;
-    }
-
-    .travel-group:last-child { border-bottom: none; }
-
-    .travel-group-label {
-      padding: 0 16px 7px;
-      font-size: 22px;
-      font-weight: 500;
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .travel-clone-badge {
-      font-size: 18px;
-      font-weight: 400;
-      color: var(--text-muted);
-      letter-spacing: 0.3px;
-    }
-
-    .travel-leg {
-      padding: 7px 16px 7px 14px;
-      cursor: pointer;
-      border-left: 3px solid transparent;
-      transition: background 0.1s, border-color 0.1s;
-    }
-
-    .travel-leg:hover { background: rgba(255,255,255,0.04); }
-
-    .travel-leg.active {
-      background: rgba(200, 169, 81, 0.07);
-      border-left-color: var(--amber);
-    }
-
-    .travel-leg-header {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 3px;
-    }
-
-    .travel-type-icon {
-      font-size: 20px;
-      opacity: 0.65;
-      flex-shrink: 0;
-    }
-
-    .travel-leg-years {
-      font-size: 22px;
-      color: var(--text-primary);
-      letter-spacing: 0.2px;
-    }
-
-    .travel-leg-meta {
-      font-size: 19px;
-      color: rgba(221, 219, 211, 0.5);
-      margin-bottom: 3px;
-      letter-spacing: 0.2px;
-    }
-
-    .travel-leg-desc {
-      font-size: 19px;
-      color: var(--text-muted);
-      font-style: italic;
-      line-height: 1.35;
-    }
-
-    /* Top-left and bottom-right corners */
-    .diagram-frame::before,
-    .diagram-frame::after {
-      content: '';
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-color: var(--amber);
-      border-style: solid;
-      opacity: 0.4;
-      z-index: 3;
-      pointer-events: none;
-    }
-
-    .diagram-frame::before { top: -1px;    left: -1px;    border-width: 1px 0 0 1px; }
-    .diagram-frame::after  { bottom: -1px; right: -1px;   border-width: 0 1px 1px 0; }
-
-    /* Top-right and bottom-left corners via inner div */
-    .diagram-corners {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 3;
-    }
-
-    .diagram-corners::before,
-    .diagram-corners::after {
-      content: '';
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-color: var(--amber);
-      border-style: solid;
-      opacity: 0.4;
-    }
-
-    .diagram-corners::before { top: -1px;    right: -1px;   border-width: 1px 1px 0 0; }
-    .diagram-corners::after  { bottom: -1px; left: -1px;    border-width: 0 0 1px 1px; }
-
-    #diagram-container svg {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-  </style>
+  <link rel="stylesheet" href="dark-timeline.css" />
 </head>
 <body>
 
@@ -302,313 +31,8 @@
   </div>
 </main>
 
+<script src="dark-timeline.js"></script>
 <script>
-const DEFAULT_SPEC = {
-  yearRange: [1880, 2060],
-  worlds: [
-    { id: "eva",      label: "Eva",      color: "#D4537E", row: 0 },
-    { id: "adam",     label: "Adam",     color: "#378ADD", row: 1 },
-    { id: "origin",   label: "Origin",   color: "#888780", row: 2, weight: 2, endYear: 1986 },
-    { id: "paradise", label: "Paradise", color: "#1D9E75", row: 3, divergeFrom: { world: "origin", year: 1971 } }
-  ],
-  intersections: [
-    { year: 1986, worlds: ["adam", "eva", "origin"], label: "Tannhaus Event" }
-  ],
-  wormholes: [
-    { world: "adam", anchor: 1986, jumps: [1953, 2019], side: "below",
-      window: { open: "1986-06-21", close: "1986-11-12" } },
-    { world: "eva",  anchor: 1986, jumps: [2019, 2052], side: "below",
-      window: { open: "1986-06-21", close: "1986-11-08" } },
-    { world: "origin", anchor: 1986, jumps: [1971], side: "above" }
-  ],
-  segments: [
-    { world: "adam", from: 1888, to: 1921, label: "Sic Mundus" },
-    { world: "adam", from: 2020, to: 2053, label: "Post-Apocalypse" },
-    { world: "eva",  from: 2020, to: 2052, label: "Erit Lux" }
-  ],
-  welds: [
-    { from: { world: "adam", year: 2020 }, to: { world: "eva", year: 2020 }, label: "Apocalypse" }
-  ],
-  cycles: [
-    { year: 1888, label: "−3" },
-    { year: 1921, label: "−2" },
-    { year: 1953, label: "−1" },
-    { year: 1986, label: "0"  },
-    { year: 2019, label: "+1" },
-    { year: 2052, label: "+2" }
-  ],
-  nodes: [
-    { world: "adam", year: 1921, label: "Portal" },
-    { world: "adam", year: 2053, label: "Portal" }
-  ],
-  markers: [
-    { world: "adam",     year: 1888, label: "Sic Mundus founded"       },
-    { world: "adam",     year: 1890, label: "Silja meets Bartosz"      },
-    { world: "adam",     year: 1904, label: "Hanno is born"            },
-    { world: "adam",     year: 1910, label: "Agnes is born"            },
-    { world: "adam",     year: 1911, label: "Jonas becomes Adam"       },
-    { world: "origin",   year: 1974, label: "Tannhaus begins machine"  },
-    { world: "adam",     year: 2040, label: "Claudia stabilizes particle" },
-    { world: "adam",     year: 2052, label: "(Bunker) Jonas arrives"   },
-    { world: "paradise", year: 2020, label: "Paradise party"           }
-  ],
-  characters: [
-    { id: "jonas", label: "Jonas", color: "#A9D47D" },
-    { id: "martha", label: "Mirror Martha", color: "#A87DD4" }
-  ],
-  travels: [
-    {
-      character: "jonas", clone: 0, sequence: 1,
-      from: { world: "adam", year: 2019 },
-      to:   { world: "adam", year: 1986 },
-      age: 16, description: "Follows clues through wormhole",
-      type: "wormhole"
-
-    },
-    {
-      character: "jonas", clone: 0, sequence: 2,
-      from: { world: "adam", year: 1986 },
-      to:   { world: "adam", year: 2019 },
-      age: 17, description: "Returns home via the cave",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 0, sequence: 3,
-      from: { world: "adam", year: 2019 },
-      to:   { world: "adam", year: 1986 },
-      age: 17, description: "Goes to save Mikkel",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 0, sequence: 4,
-      from: { world: "adam", year: 1986 },
-      to:   { world: "adam", year: 2052 },
-      age: 17, description: "Gets sent through an unstable bunker portal when his older self tries to destroy the wormhole",
-      type: "bunker(1986)"
-    },
-    {
-      character: "jonas", clone: 0, sequence: 5,
-      from: { world: "adam", year: 2053 },
-      to:   { world: "adam", year: 1921 },
-      age: 17, description: "A few months later, activates the future dark matter portal",
-      type: "portal(2053)"
-    },
-    {
-      character: "jonas", clone: 0, sequence: 6,
-      from: { world: "adam", year: 1921 },
-      to:   { world: "adam", year: 2019 },
-      age: 17, description: "As instructed by Adam, goes to try and stop his father's suicide",
-      type: "portal(1921)"
-    },
-    {
-      character: "jonas", clone: 0, sequence: 7,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "adam", year: 1987 },
-      age: 18, description: "Meets young Claudia in her house",
-      type: "portable(clockwork)"
-
-    },
-    {
-      character: "jonas", clone: 0, sequence: 8,
-      from: { world: "adam", year: 1987 },
-      to:   { world: "adam", year: 2020 },
-      age: 18, description: "Uses the Claudia era machine to re-active the wormhole.  Later witnesses Martha killed by Adam, then get's cloned by Eva",
-      type: "portable(clockwork)"
-    },
-    {
-      character: "jonas", clone: 1, sequence: 9,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "eva", year: 2019 },
-      age: 18, description: "Travels with Mirror Martha to Eva's world",
-      type: "portable(orb)"
-    },
-    {
-      character: "jonas", clone: 1, sequence: 10,
-      from: { world: "eva", year: 2019 },
-      to:   { world: "eva", year: 2052 },
-      age: 18, description: "Uses wormhole to travel with Mirror Martha and meets her future self",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 1, sequence: 11,
-      from: { world: "eva", year: 2052 },
-      to:   { world: "eva", year: 2019 },
-      age: 18, description: "Travels back, conceives The Origin and then is killed by Mirror Martha's clone",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 9,
-      from: { world: "adam", year: 2052 },
-      to:   { world: "adam", year: 2019 },
-      age: 49, description: "Now aged 33 years, returns via the portal to 2019 and bootstraps young Jonas' knowledge of the wormhole",
-      type: "portal(2053)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 10,
-      from: { world: "adam", year: 2019 },
-      to:   { world: "adam", year: 1986 },
-      age: 49, description: "Uses the wormhole to give Tannhaus Claudia's broken time machine",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 11,
-      from: { world: "adam", year: 1986 },
-      to:   { world: "adam", year: 2019 },
-      age: 49, description: "Travels to 2019 and steals cesium from the barrels in the truck",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 12,
-      from: { world: "adam", year: 2019 },
-      to:   { world: "adam", year: 1986 },
-      age: 49, description: "Returns to get his time machine from Tannhaus.  Tannhaus gives him the original, and he tries to destroy the wormhole",
-      type: "wormhole"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 13,
-      from: { world: "adam", year: 1986 },
-      to:   { world: "adam", year: 2019 },
-      age: 49, description: "Realizing he failed, he goes to visit Hannah and await The Apocalypse and save Martha from Adam",
-      type: "portable(clockwork)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 14,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "adam", year: 1987 },
-      age: 49, description: "Shows Hannah that she married Mikkel in 1987",
-      type: "portable(clockwork)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 15,
-      from: { world: "adam", year: 1987 },
-      to:   { world: "adam", year: 2020 },
-      age: 49, description: "Hannah steals the time machine to save Ulrich",
-      type: "portable(clockwork)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 16,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "adam", year: 1888 },
-      age: 49, description: "Using the Bartosz era time machine, flees The Apocalypse with Bartosz, Magnus and Franziska",
-      type: "portable(clockwork)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 17,
-      from: { world: "adam", year: 1921 },
-      to:   { world: "adam", year: 2020 },
-      age: 82, description: "Now aged to 82 and become Adam, goes to shoot Martha during the apocalypse",
-      type: "portal(1921)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 18,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "adam", year: 2053 },
-      age: 82, description: "Somehow goes to orchestrate the cycle operations, likely with a portable orb?",
-      type: "portable(orb)"
-    },
-    {
-      character: "jonas", clone: 2, sequence: 19,
-      from: { world: "adam", year: 2053 },
-      to:   { world: "eva", year: 2052 },
-      age: 82, description: "Upon realizing his plan to kill The Origin failed, travels to Erit Lux and kills Eva.",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 0, sequence: 1,
-      from: { world: "eva", year: 2019 },
-      to:   { world: "eva", year: 2052 },
-      age: 16, description: "Follows Jonas through the wormhole and meets future Martha",
-      type: "wormhole"
-
-    },
-    {
-      character: "martha", clone: 0, sequence: 2,
-      from: { world: "eva", year: 2052 },
-      to:   { world: "eva", year: 2019 },
-      age: 16, description: "Returns and conceives The Origin",
-      type: "wormhole"
-
-    },
-    {
-      character: "martha", clone: 0, sequence: 3,
-      from: { world: "eva", year: 2019 },
-      to:   { world: "adam", year: 2020 },
-      age: 16, description: "Goes to save Jonas, but is cloned by Eva in the Apocalypse",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 1, sequence: 3,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "eva", year: 2019 },
-      age: 16, description: "Saves Jonas from The Apocalypse and takes him to her world",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 1, sequence: 4,
-      from: { world: "eva", year: 2019 },
-      to:   { world: "adam", year: 1888 },
-      age: 16, description: "Under orders, goes to the Tannhaus residence.  Gives middle aged Jonas the dark matter that makes the 1921 portal",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 1, sequence: 5,
-      from: { world: "adam", year: 1888 },
-      to:   { world: "adam", year: 2053 },
-      age: 16, description: "Returns to the future Sic Mundus base.  Is captured and later killed by Adam",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 3,
-      from: { world: "adam", year: 2020 },
-      to:   { world: "eva", year: 2019 },
-      age: 16, description: "Is interrupted by Bartosz.  They returns to Erit Lux and she gets slashed by Eva.  She later kills the cloned Jonas",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 4,
-      from: { world: "eva", year: 2019 },
-      to:   { world: "eva", year: 2052 },
-      age: 16, description: "Talks with the middle aged Martha and Eva.  Writes the letter to Jonas.  Later witnesses Eva dead and turns against Adam",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 5,
-      from: { world: "eva", year: 2052 },
-      to:   { world: "eva", year: 2020 },
-      age: 49, description: "Likely returns to post-apocalypse Erit Lux and raises The Origin.  Later aged by 33 years, witnesses her younger self write the letter to Jonas.  Takes it",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 6,
-      from: { world: "eva", year: 2052 },
-      to:   { world: "adam", year: 1888 },
-      age: 49, description: "Travels to the Tannhaus factory and drops off the letter for Jonas",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 7,
-      from: { world: "adam", year: 1993 },
-      to:   { world: "adam", year: 1911 },
-      age: 82, description: "Now in her 80s, fetches and takes Hannah and Silja to Adam's factory",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 8,
-      from: { world: "adam", year: 1911 },
-      to:   { world: "eva", year: 2019 },
-      age: 82, description: "Finds young Jonas fresh from Adam's world and takes him to Erit Lux. Convinces her younger self to kill Jonas",
-      type: "portable(orb)"
-    },
-    {
-      character: "martha", clone: 2, sequence: 9,
-      from: { world: "eva", year: 2019 },
-      to:   { world: "eva", year: 2052 },
-      age: 82, description: "Explains quantum entanglement to her younger self.  Is then found by Adam and killed",
-      type: "portable(orb)"
-    },
-  ]
-};
-
 const container = document.getElementById('diagram-container');
 const statusEl  = document.getElementById('status');
 
@@ -937,7 +361,14 @@ function render(spec) {
     const interWorld = rowDist > 0;
     let splitPathD;
 
-    if (interWorld) {
+    if (travel.type === 'normal') {
+      // Natural aging — dashed stripe running just below the world line
+      const oy    = rowToY(fromWorld.row) + 3;
+      const pathD = `M ${fromX.toFixed(1)} ${oy.toFixed(1)} L ${toX.toFixed(1)} ${oy.toFixed(1)}`;
+      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 3" opacity="0.08"/>`);
+      parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${oy.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${oy.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+    } else if (interWorld) {
       const yearDiff = travel.to.year - travel.from.year;
       const sweepDir = yearDiff >= 0 ? 1 : -1;
       const sweepAmt = Math.max(60, Math.min(90, Math.abs(toX - fromX) * 0.12 + 55));
@@ -952,6 +383,9 @@ function render(spec) {
       const c2ax = (3*sw + toX) / 4,          c2ay = (fromY + 3*toY) / 4;
       const c2bx = (sw + toX) / 2,            c2by = toY;
       splitPathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} C ${c1ax.toFixed(1)} ${c1ay.toFixed(1)},${c1bx.toFixed(1)} ${c1by.toFixed(1)},${Sx.toFixed(1)} ${Sy.toFixed(1)} C ${c2ax.toFixed(1)} ${c2ay.toFixed(1)},${c2bx.toFixed(1)} ${c2by.toFixed(1)},${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none" filter="url(#travel-glow)"/>`);
+      parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${fromY.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${toY.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
     } else {
       const pathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)}, ${toX.toFixed(1)} ${toY.toFixed(1)}`;
       parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4 3" opacity="0.08"/>`);
@@ -961,13 +395,10 @@ function render(spec) {
       const c2x = (midX + toX) / 2,   c2y = (midY + toY) / 2;
       const Sx  = (c1x + c2x) / 2,    Sy  = (c1y + c2y) / 2;
       splitPathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} Q ${c1x.toFixed(1)} ${c1y.toFixed(1)},${Sx.toFixed(1)} ${Sy.toFixed(1)} Q ${c2x.toFixed(1)} ${c2y.toFixed(1)},${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${fromY.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${toY.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
     }
-
-    // Invisible split path with marker-mid — SVG auto-orients the dart to the curve tangent
-    const glowAttr = interWorld ? ' filter="url(#travel-glow)"' : '';
-    parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none"${glowAttr}/>`);
-    parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${fromY.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
-    parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${toY.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
   }
 
   // Welds
@@ -1132,6 +563,7 @@ function flash(msg) {
 function travelTypeIcon(type) {
   if (!type) return '';
   const t = type.toLowerCase();
+  if (t === 'normal')                return '→';
   if (t === 'wormhole')              return '〰';
   if (t.startsWith('portal'))        return '◉';
   if (t.startsWith('bunker'))        return '⊕';
@@ -1152,9 +584,9 @@ function highlightTravel(idx) {
 
   if (idx === _activeTravelIdx || idx === null) {
     allArcs.forEach(a => {
-      a.setAttribute('opacity',          a.dataset.baseOpacity || '0.22');
-      a.setAttribute('stroke-width',     a.dataset.baseStrokeW || '1');
-      a.setAttribute('stroke-dasharray', a.dataset.baseDash    || '4 3');
+      a.setAttribute('opacity',          a.dataset.baseOpacity ?? '0.22');
+      a.setAttribute('stroke-width',     a.dataset.baseStrokeW ?? '1');
+      a.setAttribute('stroke-dasharray', a.dataset.baseDash    ?? '4 3');
     });
     allDots.forEach(d => d.setAttribute('display', 'none'));
     allArrows.forEach(a => a.setAttribute('display', 'none'));
@@ -1191,12 +623,12 @@ function highlightTravel(idx) {
       // Prior legs of this journey — lit trail, keep original dash
       a.setAttribute('opacity', '0.65');
       a.setAttribute('stroke-width', a.dataset.baseStrokeW);
-      a.setAttribute('stroke-dasharray', a.dataset.baseDash || '4 3');
+      a.setAttribute('stroke-dasharray', a.dataset.baseDash ?? '4 3');
     } else {
       // Everything else — ghost
       a.setAttribute('opacity', '0.04');
       a.setAttribute('stroke-width', a.dataset.baseStrokeW);
-      a.setAttribute('stroke-dasharray', a.dataset.baseDash || '4 3');
+      a.setAttribute('stroke-dasharray', a.dataset.baseDash ?? '4 3');
     }
   });
 

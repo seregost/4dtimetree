@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Usage: node gen_svg.js [input.json] [output.svg]
-//   input.json  — timeline spec (defaults to DEFAULT_SPEC embedded in dark_timeline_editor.html)
+//   input        — timeline spec file (defaults to dark-timeline.js; also accepts .json)
 //   output.svg  — where to write (defaults to dark-timeline.svg)
 // Examples:
-//   node gen_svg.js                                 # regenerate from editor default spec
+//   node gen_svg.js                                 # regenerate from dark-timeline.js
 //   node gen_svg.js my-spec.json                    # render a custom spec
 //   node gen_svg.js my-spec.json my-diagram.svg     # render to a specific output
 
@@ -16,16 +16,16 @@ const fs = { readFileSync, writeFileSync };
 const [,, inputArg, outputArg] = process.argv;
 const outputFile = outputArg || 'dark-timeline.svg';
 
+const specFile = inputArg || `${__dirname}/dark-timeline.js`;
 let spec;
-if (inputArg) {
-  spec = JSON.parse(fs.readFileSync(inputArg, 'utf8'));
-} else {
-  // Extract DEFAULT_SPEC from the editor HTML so we stay in sync with it
-  const htmlPath = `${__dirname}/dark_timeline_editor.html`;
-  const html = fs.readFileSync(htmlPath, 'utf8');
-  const m = html.match(/const DEFAULT_SPEC\s*=\s*(\{[\s\S]*?\});\s*\n\s*const container/);
-  if (!m) { console.error('Could not find DEFAULT_SPEC in dark_timeline_editor.html'); process.exit(1); }
-  spec = eval('(' + m[1] + ')');
+try {
+  const src = fs.readFileSync(specFile, 'utf8');
+  // Support both plain JSON and the browser-loadable `var DEFAULT_SPEC = {...};` format
+  const jsonStr = src.replace(/^\s*var\s+\w+\s*=\s*/, '').replace(/\s*;\s*$/, '');
+  spec = JSON.parse(jsonStr);
+} catch (e) {
+  console.error(`Failed to load spec from ${specFile}:`, e.message);
+  process.exit(1);
 }
 
 const VIEW_W = 760;
@@ -363,7 +363,11 @@ function render(spec) {
     const interWorld = rowDist > 0;
     let splitPathD;
 
-    if (interWorld) {
+    if (travel.type === 'normal') {
+      const oy    = rowToY(fromWorld.row) + 3;
+      const pathD = `M ${fromX.toFixed(1)} ${oy.toFixed(1)} L ${toX.toFixed(1)} ${oy.toFixed(1)}`;
+      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 3" opacity="0.08"/>`);
+    } else if (interWorld) {
       const yearDiff = travel.to.year - travel.from.year;
       const sweepDir = yearDiff >= 0 ? 1 : -1;
       const sweepAmt = Math.max(60, Math.min(90, Math.abs(toX - fromX) * 0.12 + 55));
@@ -376,6 +380,7 @@ function render(spec) {
       const c2ax = (3*sw + toX) / 4,         c2ay = (fromY + 3*toY) / 4;
       const c2bx = (sw + toX) / 2,           c2by = toY;
       splitPathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} C ${c1ax.toFixed(1)} ${c1ay.toFixed(1)},${c1bx.toFixed(1)} ${c1by.toFixed(1)},${Sx.toFixed(1)} ${Sy.toFixed(1)} C ${c2ax.toFixed(1)} ${c2ay.toFixed(1)},${c2bx.toFixed(1)} ${c2by.toFixed(1)},${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none" filter="url(#travel-glow)"/>`);
     } else {
       const pathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)}, ${toX.toFixed(1)} ${toY.toFixed(1)}`;
       parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4 3" opacity="0.08"/>`);
@@ -383,10 +388,8 @@ function render(spec) {
       const c2x = (midX + toX) / 2,   c2y = (midY + toY) / 2;
       const Sx  = (c1x + c2x) / 2,    Sy  = (c1y + c2y) / 2;
       splitPathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} Q ${c1x.toFixed(1)} ${c1y.toFixed(1)},${Sx.toFixed(1)} ${Sy.toFixed(1)} Q ${c2x.toFixed(1)} ${c2y.toFixed(1)},${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none"/>`);
     }
-
-    const glowAttr = interWorld ? ' filter="url(#travel-glow)"' : '';
-    parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none"${glowAttr}/>`);
   }
 
   for (const weld of (spec.welds || [])) {
