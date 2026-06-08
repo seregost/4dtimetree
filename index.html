@@ -1,0 +1,3439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4D Timetree</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-page:        #09090d;
+      --bg-surface:     #141418;
+      --bg-input:       #1a1a20;
+      --bg-hover:       rgba(255,255,255,0.04);
+      --border-subtle:  rgba(255,255,255,0.055);
+      --border-accent:  rgba(200,169,81,0.16);
+      --border-input:   rgba(255,255,255,0.10);
+      --text-primary:   #dddbd3;
+      --text-muted:     #4e4c46;
+      --amber:          #C8A951;
+      --danger:         #c0392b;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 46px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-title { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: #fff; text-transform: uppercase; }
+    .brand-sep { width: 1px; height: 13px; background: var(--border-subtle); flex-shrink: 0; }
+    .brand-sub { font-size: 9px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+
+    .toolbar { display: flex; align-items: center; gap: 8px; }
+    #status {
+      font-size: 10px; letter-spacing: 0.6px; color: var(--amber);
+      opacity: 0; transition: opacity 0.25s;
+    }
+    #status.show { opacity: 1; }
+
+    .btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 12px;
+      border-radius: 2px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .btn:hover { color: var(--amber); border-color: rgba(200,169,81,0.3); background: rgba(200,169,81,0.04); }
+
+    /* ── Main three-column layout ── */
+    main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    /* ── Left editor panel ── */
+    #editor-panel {
+      width: 272px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .tab-nav {
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1px;
+      padding: 8px 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-page);
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      border-radius: 2px 2px 0 0;
+      padding: 4px 8px 5px;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active {
+      color: var(--amber);
+      border-color: var(--border-subtle);
+      border-bottom-color: var(--bg-surface);
+      background: var(--bg-surface);
+    }
+
+    .tab-body {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(200,169,81,0.18) transparent;
+    }
+    .tab-body::-webkit-scrollbar { width: 4px; }
+    .tab-body::-webkit-scrollbar-thumb { background: rgba(200,169,81,0.18); border-radius: 2px; }
+
+    .tab-pane { display: none; padding: 14px 12px; }
+    .tab-pane.active { display: block; }
+
+    /* ── Forms ── */
+    .form-section-title {
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
+    .form-group { margin-bottom: 9px; }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      padding: 5px 7px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    .form-input:focus { border-color: rgba(200,169,81,0.35); }
+
+    input[type="color"].form-input {
+      padding: 2px 4px;
+      height: 28px;
+      cursor: pointer;
+    }
+
+    .form-row { display: flex; gap: 6px; }
+    .form-row .form-group { flex: 1; }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    .btn-add {
+      width: 100%;
+      background: rgba(200,169,81,0.08);
+      color: var(--amber);
+      border: 1px solid rgba(200,169,81,0.22);
+      border-radius: 2px;
+      padding: 7px;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .btn-add:hover { background: rgba(200,169,81,0.14); border-color: rgba(200,169,81,0.4); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      padding: 4px 8px;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .btn-secondary:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+
+    .btn-place {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      padding: 4px 7px;
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.12s, border-color 0.12s;
+      line-height: 1;
+    }
+    .btn-place:hover { color: var(--amber); border-color: rgba(200,169,81,0.3); }
+    .btn-place.active { color: var(--amber); border-color: rgba(200,169,81,0.5); }
+
+    .input-with-btn { display: flex; gap: 4px; align-items: flex-end; }
+    .input-with-btn .form-input { flex: 1; }
+
+    /* Radio group */
+    .radio-group { display: flex; gap: 12px; }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    /* Checkbox list for intersections */
+    .checkbox-list {
+      background: var(--bg-input);
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      padding: 6px 8px;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-primary);
+      padding: 2px 0;
+      cursor: pointer;
+    }
+
+    /* Dynamic jump inputs */
+    #wormhole-jumps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* ── Item lists ── */
+    .item-list-title {
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 14px 0 6px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .item-list { display: flex; flex-direction: column; gap: 2px; }
+
+    .item-empty { font-size: 12px; color: var(--text-muted); font-style: italic; padding: 2px 0; }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 2px;
+      padding: 4px 6px;
+      gap: 6px;
+    }
+
+    .item-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .item-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .item-label {
+      font-size: 12px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 1;
+    }
+
+    .btn-delete {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      flex-shrink: 0;
+      transition: color 0.12s;
+    }
+    .btn-delete:hover { color: var(--danger); }
+
+    /* ── Marker focus panel ── */
+    .marker-focus-panel {
+      border: 1px solid rgba(200,169,81,0.28);
+      border-radius: 3px;
+      margin-bottom: 10px;
+      background: rgba(200,169,81,0.04);
+      overflow: hidden;
+    }
+    .focus-panel-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 8px 10px 7px;
+      border-bottom: 1px solid rgba(200,169,81,0.15);
+      gap: 6px;
+    }
+    .focus-panel-title { font-size: 13px; color: var(--text-primary); font-weight: 500; line-height: 1.3; }
+    .focus-panel-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .focus-branch-list { padding: 4px 8px 0; }
+    .focus-branch-row  {
+      display: flex; align-items: flex-start; gap: 4px;
+      padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .focus-branch-info { flex: 1; min-width: 0; }
+    .branch-inline-form {
+      padding: 8px 10px 10px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.15);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .focus-panel-add-btn {
+      width: 100%; padding: 7px;
+      font-size: 11px; letter-spacing: 0.5px; text-align: center;
+      background: transparent; color: var(--text-muted);
+      border: none; border-top: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer; transition: color 0.12s, background 0.12s;
+    }
+    .focus-panel-add-btn:hover { color: var(--amber); background: rgba(200,169,81,0.05); }
+    .item-row--selected {
+      border-left: 2px solid var(--amber) !important;
+      background: rgba(200,169,81,0.06) !important;
+    }
+    .branch-dest-hint {
+      font-size: 11px; color: var(--amber); font-style: italic;
+      padding: 3px 0; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Center canvas column ── */
+    #canvas-column {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-page);
+      padding: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(200,169,81,0.22) transparent;
+    }
+    #canvas-column::-webkit-scrollbar { width: 4px; }
+    #canvas-column::-webkit-scrollbar-track { background: transparent; }
+    #canvas-column::-webkit-scrollbar-thumb { background: rgba(200,169,81,0.22); border-radius: 2px; }
+    #canvas-column::-webkit-scrollbar-thumb:hover { background: rgba(200,169,81,0.45); }
+
+    .diagram-frame {
+      width: 100%;
+      position: relative;
+      border: 1px solid var(--border-accent);
+      border-radius: 2px;
+      background: var(--bg-surface);
+      min-height: 200px;
+    }
+
+    .diagram-frame::before, .diagram-frame::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--amber);
+      border-style: solid;
+      opacity: 0.4;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .diagram-frame::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .diagram-frame::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+    .diagram-corners {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .diagram-corners::before, .diagram-corners::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--amber);
+      border-style: solid;
+      opacity: 0.4;
+    }
+    .diagram-corners::before { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+    .diagram-corners::after  { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
+
+    #diagram-container svg { display: block; width: 100%; height: auto; }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    /* ── Right JSON panel ── */
+    #json-panel {
+      width: 272px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      flex-shrink: 0;
+      padding: 9px 12px 8px;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    #json-textarea {
+      flex: 1;
+      resize: none;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border: none;
+      padding: 10px 12px;
+      font-family: 'Menlo', 'Consolas', monospace;
+      font-size: 10px;
+      line-height: 1.5;
+      outline: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(200,169,81,0.18) transparent;
+    }
+
+    #error-banner {
+      display: none;
+      flex-shrink: 0;
+      padding: 8px 12px;
+      font-size: 10px;
+      color: #e07070;
+      background: rgba(192,57,43,0.12);
+      border-top: 1px solid rgba(192,57,43,0.25);
+      line-height: 1.4;
+    }
+
+    /* Diverge-from conditional row */
+    #diverge-year-row { display: none; }
+
+    /* Separator line inside form */
+    .form-sep { border: none; border-top: 1px solid var(--border-subtle); margin: 12px 0; }
+
+    /* Edit mode */
+    .edit-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(200,169,81,0.07);
+      border: 1px solid rgba(200,169,81,0.22);
+      border-radius: 2px;
+      padding: 5px 8px;
+      margin-bottom: 8px;
+      font-size: 9px;
+      color: var(--amber);
+      letter-spacing: 0.5px;
+    }
+    .btn-cancel-edit {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      padding: 2px 7px;
+      font-size: 9px;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+    .btn-cancel-edit:hover { color: var(--text-primary); }
+    .btn-edit {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 3px;
+      flex-shrink: 0;
+      transition: color 0.12s;
+    }
+    .btn-edit:hover { color: var(--amber); }
+
+    /* ── Canvas Edit Card (shared popover for marker / node / link) ── */
+    #canvas-edit-card {
+      position: absolute;
+      z-index: 20;
+      display: none;
+      flex-direction: column;
+      width: 290px;
+      background: #1a1a1f;
+      border: 1px solid rgba(200,169,81,0.38);
+      border-radius: 4px;
+      box-shadow: 0 8px 36px rgba(0,0,0,0.78);
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      overflow: hidden;
+    }
+    #canvas-edit-card.visible { display: flex; }
+
+    .cec-header {
+      padding: 9px 14px 7px;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--amber);
+      border-bottom: 1px solid rgba(255,255,255,0.055);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cec-close {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 15px; cursor: pointer; padding: 0; line-height: 1;
+    }
+    .cec-close:hover { color: var(--text-primary); }
+
+    .cec-body { padding: 10px 14px 6px; display: flex; flex-direction: column; gap: 8px; }
+
+    .cec-field { display: flex; flex-direction: column; gap: 3px; }
+    .cec-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+
+    .cec-input, .cec-select, .cec-textarea {
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 3px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      padding: 7px 10px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+    .cec-input:focus, .cec-select:focus, .cec-textarea:focus {
+      border-color: rgba(200,169,81,0.42);
+    }
+    .cec-textarea { resize: none; line-height: 1.5; }
+    .cec-select { cursor: pointer; }
+
+    .cec-row { display: flex; gap: 8px; }
+    .cec-row .cec-field { flex: 1; min-width: 0; }
+
+    .cec-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px 10px;
+      border-top: 1px solid rgba(255,255,255,0.055);
+    }
+    .cec-btn-delete {
+      background: transparent; border: none;
+      color: rgba(200,80,80,0.5);
+      font-size: 10px; letter-spacing: 0.5px; cursor: pointer; padding: 3px 0;
+      transition: color 0.12s;
+    }
+    .cec-btn-delete:hover { color: rgba(200,80,80,0.92); }
+    .cec-btn-save {
+      background: rgba(200,169,81,0.12);
+      border: 1px solid rgba(200,169,81,0.32); border-radius: 3px;
+      color: var(--amber); font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; padding: 5px 14px;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .cec-btn-save:hover { background: rgba(200,169,81,0.22); border-color: rgba(200,169,81,0.52); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-title">4D Timetree</span>
+    <div class="brand-sep"></div>
+    <span class="brand-sub">Editor</span>
+  </div>
+  <div class="toolbar">
+    <span id="status"></span>
+    <label class="btn" style="cursor:pointer">
+      Load JSON
+      <input type="file" id="file-input" accept=".json" style="display:none">
+    </label>
+    <button class="btn" id="btn-export-json">Export JSON</button>
+    <button class="btn" id="btn-export-svg">Export SVG</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Left Editor Panel ── -->
+  <div id="editor-panel">
+    <nav class="tab-nav">
+      <button class="tab-btn" data-tab="setup">Setup</button>
+      <button class="tab-btn" data-tab="timelines">Lines</button>
+      <button class="tab-btn" data-tab="nodes">Nodes</button>
+      <button class="tab-btn" data-tab="markers">Markers</button>
+      <button class="tab-btn" data-tab="welds">Welds</button>
+      <button class="tab-btn" data-tab="intersections">Merge</button>
+      <button class="tab-btn" data-tab="branches">Branch</button>
+      <button class="tab-btn" data-tab="links">Links</button>
+      <button class="tab-btn" data-tab="wormholes">Holes</button>
+      <button class="tab-btn" data-tab="cycles">Cycles</button>
+    </nav>
+    <div class="tab-body">
+
+      <!-- Setup tab -->
+      <div id="tab-setup" class="tab-pane">
+        <div class="form-section-title">Year Range</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Start Year</label>
+            <input type="number" id="setup-start-year" class="form-input" value="1900">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Year</label>
+            <input type="number" id="setup-end-year" class="form-input" value="2100">
+          </div>
+        </div>
+        <hr class="form-sep">
+        <div class="form-section-title">Quick Load</div>
+        <button class="btn-secondary" id="btn-load-dark" style="width:100%">Load Dark TV Show Spec</button>
+        <p class="form-hint" style="margin-top:6px">Loads a 4-world spec from the Dark TV show as a starting point.</p>
+      </div>
+
+      <!-- Timelines tab -->
+      <div id="tab-timelines" class="tab-pane">
+        <div class="form-section-title">Add Timeline</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ID *</label>
+            <input type="text" id="world-id" class="form-input" placeholder="e.g. alpha">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Row *</label>
+            <input type="number" id="world-row" class="form-input" placeholder="0" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Label</label>
+          <input type="text" id="world-label" class="form-input" placeholder="Display name">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <input type="color" id="world-color" class="form-input" value="#6688cc">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight</label>
+            <input type="number" id="world-weight" class="form-input" placeholder="1.5" step="0.5" min="0.5">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Start Year</label>
+            <input type="number" id="world-start-year" class="form-input" placeholder="optional">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Year</label>
+            <input type="number" id="world-end-year" class="form-input" placeholder="optional">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diverges From (world)</label>
+          <select id="world-diverge-from-world" class="form-input" data-world-selector>
+            <option value="">— none —</option>
+          </select>
+        </div>
+        <div class="form-group" id="diverge-year-row">
+          <label class="form-label">Diverge Year</label>
+          <input type="number" id="world-diverge-from-year" class="form-input" placeholder="Year of divergence">
+        </div>
+        <div id="edit-bar-worlds" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing timeline</span><button class="btn-cancel-edit" onclick="cancelEditWorlds()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-worlds" onclick="addWorld()">+ Add Timeline</button>
+
+        <div class="item-list-title">Timelines</div>
+        <div class="item-list" id="worlds-item-list"></div>
+      </div>
+
+      <!-- Nodes tab -->
+      <div id="tab-nodes" class="tab-pane">
+        <div class="form-section-title">Nodes</div>
+        <p class="form-hint" style="margin-bottom:10px">Click any node bead on the canvas to edit it. Add a new one below — a card opens on the canvas to fill in the details.</p>
+        <button class="btn-add" onclick="addNode()">+ Add Node</button>
+        <div class="item-list-title">Nodes</div>
+        <div class="item-list" id="nodes-item-list"></div>
+      </div>
+
+      <!-- Markers tab -->
+      <div id="tab-markers" class="tab-pane">
+        <div class="form-section-title">Markers</div>
+        <p class="form-hint" style="margin-bottom:10px">Click any marker bead on the canvas to edit it. Add a new one below — a card opens on the canvas to fill in the details.</p>
+        <button class="btn-add" onclick="addMarker()">+ Add Marker</button>
+        <div class="item-list-title">Markers</div>
+        <div class="item-list" id="markers-item-list"></div>
+      </div>
+
+      <!-- Welds tab -->
+      <div id="tab-welds" class="tab-pane">
+        <div class="form-section-title">Add Connection (Weld)</div>
+        <p class="form-hint" style="margin-bottom:10px">A weld draws a vertical bridge between two points. Typically both years are the same (same moment in time).</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">From Timeline *</label>
+            <select id="weld-from-world" class="form-input" data-world-selector>
+              <option value="">— select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">From Year *</label>
+            <input type="number" id="weld-from-year" class="form-input" placeholder="Year">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">To Timeline *</label>
+            <select id="weld-to-world" class="form-input" data-world-selector>
+              <option value="">— select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">To Year *</label>
+            <input type="number" id="weld-to-year" class="form-input" placeholder="Year">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Label</label>
+          <input type="text" id="weld-label" class="form-input" placeholder="optional">
+        </div>
+        <div id="edit-bar-welds" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing connection</span><button class="btn-cancel-edit" onclick="cancelEditWelds()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-welds" onclick="addWeld()">+ Add Connection</button>
+
+        <div class="item-list-title">Connections</div>
+        <div class="item-list" id="welds-item-list"></div>
+      </div>
+
+      <!-- Intersections tab -->
+      <div id="tab-intersections" class="tab-pane">
+        <div class="form-section-title">Add Intersection (Merge)</div>
+        <p class="form-hint" style="margin-bottom:10px">An intersection is where multiple timelines converge at a single year.</p>
+        <div class="form-group">
+          <label class="form-label">Year *</label>
+          <input type="number" id="intersection-year" class="form-input" placeholder="Year">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Timelines * (select 2+)</label>
+          <div class="checkbox-list" id="intersection-worlds-checkboxes">
+            <span class="item-empty">Add timelines first</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Terminates here (optional)</label>
+          <div class="checkbox-list" id="intersection-terminus-checkboxes">
+            <span class="item-empty">Select timelines above first</span>
+          </div>
+          <p class="form-hint" style="margin-top:4px">Checked timelines will end at this intersection and not continue past it.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Label</label>
+          <input type="text" id="intersection-label" class="form-input" placeholder="optional">
+        </div>
+        <div id="edit-bar-intersections" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing intersection</span><button class="btn-cancel-edit" onclick="cancelEditIntersections()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-intersections" onclick="addIntersection()">+ Add Intersection</button>
+
+        <div class="item-list-title">Intersections</div>
+        <div class="item-list" id="intersections-item-list"></div>
+      </div>
+
+      <!-- Branches tab -->
+      <div id="tab-branches" class="tab-pane">
+        <div class="form-section-title">Add Branch</div>
+        <p class="form-hint" style="margin-bottom:10px">Draws a dashed arc between any two points on any two timelines — useful for showing causation, jumps, or connections.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">From Timeline *</label>
+            <select id="branch-from-world" class="form-input" data-world-selector>
+              <option value="">— select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">From Year *</label>
+            <input type="number" id="branch-from-year" class="form-input" placeholder="Year">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">To Timeline *</label>
+            <select id="branch-new-world" class="form-input" data-world-selector>
+              <option value="">— select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">To Year *</label>
+            <input type="number" id="branch-to-year" class="form-input" placeholder="Year">
+          </div>
+        </div>
+        <div id="edit-bar-branches" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing branch</span><button class="btn-cancel-edit" onclick="cancelEditBranches()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-branches" onclick="addBranch()">+ Add Branch</button>
+
+        <div class="item-list-title">Branches</div>
+        <div class="item-list" id="branches-item-list"></div>
+      </div>
+
+      <!-- Wormholes tab -->
+      <div id="tab-wormholes" class="tab-pane">
+        <div class="form-section-title">Add Wormhole</div>
+        <p class="form-hint" style="margin-bottom:10px">A wormhole draws sine-wave arcs from an anchor year to one or more jump years on the same timeline.</p>
+        <div class="form-group">
+          <label class="form-label">Timeline *</label>
+          <select id="wormhole-world" class="form-input" data-world-selector>
+            <option value="">— select —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Anchor Year *</label>
+          <input type="number" id="wormhole-anchor" class="form-input" placeholder="Anchor year">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jump Years * <button class="btn-secondary" onclick="addJumpYearInput()" style="margin-left:6px;font-size:8px;padding:2px 6px">+ Add</button></label>
+          <div id="wormhole-jumps-container">
+            <input type="number" class="jump-year-input form-input" placeholder="Jump year">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Arc Side</label>
+          <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="wormhole-side" value="above"> Above</label>
+            <label class="radio-label"><input type="radio" name="wormhole-side" value="below" checked> Below</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Window Open</label>
+            <input type="text" id="wormhole-window-open" class="form-input" placeholder="optional date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Window Close</label>
+            <input type="text" id="wormhole-window-close" class="form-input" placeholder="optional date">
+          </div>
+        </div>
+        <div id="edit-bar-wormholes" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing wormhole</span><button class="btn-cancel-edit" onclick="cancelEditWormholes()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-wormholes" onclick="addWormhole()">+ Add Wormhole</button>
+
+        <div class="item-list-title">Wormholes</div>
+        <div class="item-list" id="wormholes-item-list"></div>
+      </div>
+
+      <!-- Links tab -->
+      <div id="tab-links" class="tab-pane">
+        <div class="form-section-title">Causal Links</div>
+
+        <!-- Draw mode status bar (shown while drawing) -->
+        <div id="link-draw-status" style="display:none;margin-bottom:8px">
+          <div class="branch-dest-hint" id="link-draw-hint"></div>
+        </div>
+
+        <p class="form-hint" style="margin-bottom:10px">Click any arc on the canvas to edit it. To draw a new link: switch to this tab, then click two beads.</p>
+
+        <div class="item-list-title">All Links</div>
+        <div class="item-list" id="links-item-list"></div>
+      </div>
+
+      <!-- Cycles tab -->
+      <div id="tab-cycles" class="tab-pane">
+        <div class="form-section-title">Add Cycle Marker</div>
+        <p class="form-hint" style="margin-bottom:10px">Draws a dashed vertical line at a year — useful for marking repeating periods.</p>
+        <div class="form-group">
+          <label class="form-label">Year *</label>
+          <input type="number" id="cycle-year" class="form-input" placeholder="Year">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Label</label>
+          <input type="text" id="cycle-label" class="form-input" placeholder="optional">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Color</label>
+          <input type="color" id="cycle-color" class="form-input" value="#C8A951">
+        </div>
+        <div id="edit-bar-cycles" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing cycle</span><button class="btn-cancel-edit" onclick="cancelEditCycles()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-cycles" onclick="addCycle()">+ Add Cycle</button>
+
+        <div class="item-list-title">Cycles</div>
+        <div class="item-list" id="cycles-item-list"></div>
+      </div>
+
+    </div><!-- .tab-body -->
+  </div><!-- #editor-panel -->
+
+  <!-- ── Center Canvas ── -->
+  <div id="canvas-column">
+    <div class="diagram-frame">
+      <div class="diagram-corners"></div>
+      <div id="diagram-container"></div>
+      <!-- Canvas edit card — floats over diagram, shared for markers / nodes / links -->
+      <div id="canvas-edit-card">
+        <div class="cec-header">
+          <span id="cec-title">Event</span>
+          <button class="cec-close" onclick="hideEditCard()">✕</button>
+        </div>
+        <div class="cec-body" id="cec-body"></div>
+        <div class="cec-footer">
+          <button class="cec-btn-delete" onclick="deleteFromCard()">Delete</button>
+          <button class="cec-btn-save" onclick="saveCard()">Save ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right JSON Panel ── -->
+  <div id="json-panel">
+    <div class="panel-header">Spec JSON</div>
+    <textarea id="json-textarea" spellcheck="false"></textarea>
+    <div id="error-banner"></div>
+  </div>
+
+</main>
+
+<script>
+// ====================================================================
+// SECTION 1: Render Engine — copied verbatim from dark_timeline_editor.html
+// ====================================================================
+
+const VIEW_W            = 760;
+const ROW_HEIGHT        = 95;
+const TOP_MARGIN        = 50;
+const LEFT_MARGIN       = 70;
+const RIGHT_MARGIN      = 50;
+const PLOT_W            = VIEW_W - LEFT_MARGIN - RIGHT_MARGIN;
+const INTERSECTION_RADIUS = 20;
+const NODE_RADIUS       = 12;
+const BEND_WIDTH        = 53;
+const MUTED             = '#888780';
+
+function circled(n) {
+  return n <= 9 ? String.fromCharCode(0x2460 + n - 1) : String(n);
+}
+
+function resolveEventRef(spec, ref) {
+  if (!ref) return null;
+  if (ref.eventId) {
+    const m = (spec.markers || []).find(m => m.id === ref.eventId);
+    if (m) return { world: m.world, year: m.year, label: m.label, type: 'marker' };
+    const n = (spec.nodes   || []).find(n => n.id === ref.eventId);
+    if (n) return { world: n.world, year: n.year, label: n.label || null, type: 'node' };
+    return null;
+  }
+  if (ref.world && ref.year !== undefined)
+    return { world: ref.world, year: ref.year, label: null, type: 'freeform' };
+  return null;
+}
+
+const CATEGORIES = [
+  { id: 'combat',    name: 'Combat',     icon: '⚔️',  color: '#c0392b' },
+  { id: 'political', name: 'Political',  icon: '👑',  color: '#8e44ad' },
+  { id: 'mystery',   name: 'Mystery',    icon: '🔍',  color: '#1abc9c' },
+  { id: 'death',     name: 'NPC Death',  icon: '💀',  color: '#7f8c8d' },
+  { id: 'quest',     name: 'Quest',      icon: '⭐',  color: '#f39c12' },
+  { id: 'discovery', name: 'Discovery',  icon: '🗺️', color: '#2980b9' },
+  { id: 'magic',     name: 'Magic',      icon: '✨',  color: '#9b59b6' },
+  { id: 'lore',      name: 'Lore',       icon: '📜',  color: '#e67e22' },
+  { id: 'travel',    name: 'Travel',     icon: '🚶',  color: '#27ae60' },
+  { id: 'rest',      name: 'Rest / Camp', icon: '🏕️', color: '#16a085' },
+];
+
+function yearToX(year, yearRange) {
+  const [start, end] = yearRange;
+  return LEFT_MARGIN + ((year - start) / (end - start)) * PLOT_W;
+}
+
+function rowToY(row) {
+  return TOP_MARGIN + row * ROW_HEIGHT;
+}
+
+function findIntersectionForWorldYear(spec, worldId, year) {
+  for (const inter of (spec.intersections || [])) {
+    if (inter.year === year && inter.worlds.includes(worldId)) return inter;
+  }
+  return null;
+}
+
+function getIntersectionY(spec, inter) {
+  const rows = inter.worlds.map(wid => {
+    const w = spec.worlds.find(w => w.id === wid);
+    return w ? w.row : 0;
+  });
+  return rowToY((Math.min(...rows) + Math.max(...rows)) / 2);
+}
+
+function worldTerminatesAtIntersection(spec, world) {
+  if (world.endYear === undefined) return false;
+  return (spec.intersections || []).some(i => i.year === world.endYear && i.worlds.includes(world.id));
+}
+
+function buildWorldPath(spec, world) {
+  const yearRange    = spec.yearRange;
+  const intersections = (spec.intersections || [])
+    .filter(i => i.worlds.includes(world.id))
+    .sort((a, b) => a.year - b.year);
+
+  const startYear = world.startYear !== undefined ? world.startYear
+    : world.divergeFrom ? world.divergeFrom.year
+    : yearRange[0];
+  const endYear  = world.endYear !== undefined ? world.endYear : yearRange[1];
+  const terminal = worldTerminatesAtIntersection(spec, world);
+  const baseY    = rowToY(world.row);
+  const parts    = [];
+  let cursorX    = yearToX(startYear, yearRange);
+
+  if (world.divergeFrom) {
+    const srcWorld = spec.worlds.find(w => w.id === world.divergeFrom.world);
+    const fromY    = srcWorld ? rowToY(srcWorld.row) : baseY;
+    parts.push(`M ${cursorX.toFixed(1)} ${fromY.toFixed(1)}`);
+    const endDivX = cursorX + BEND_WIDTH;
+    parts.push(`C ${(cursorX + BEND_WIDTH * 0.1).toFixed(1)} ${fromY.toFixed(1)}, ${(cursorX + BEND_WIDTH * 0.65).toFixed(1)} ${baseY.toFixed(1)}, ${endDivX.toFixed(1)} ${baseY.toFixed(1)}`);
+    cursorX = endDivX;
+  } else {
+    parts.push(`M ${cursorX.toFixed(1)} ${baseY.toFixed(1)}`);
+  }
+
+  for (let i = 0; i < intersections.length; i++) {
+    const inter    = intersections[i];
+    const ix       = yearToX(inter.year, yearRange);
+    const iy       = getIntersectionY(spec, inter);
+    const bendStart = ix - BEND_WIDTH;
+    const bendEnd  = ix + BEND_WIDTH;
+    const isTerminalHere = terminal && i === intersections.length - 1;
+
+    const approachStartX = Math.max(cursorX, bendStart);
+    if (approachStartX > cursorX) parts.push(`L ${approachStartX.toFixed(1)} ${baseY.toFixed(1)}`);
+
+    const dx = ix - approachStartX;
+    if (dx > 1) {
+      parts.push(`C ${(approachStartX + dx * 0.65).toFixed(1)} ${baseY.toFixed(1)}, ${(ix - dx * 0.1).toFixed(1)} ${iy.toFixed(1)}, ${ix.toFixed(1)} ${iy.toFixed(1)}`);
+    } else {
+      parts.push(`L ${ix.toFixed(1)} ${iy.toFixed(1)}`);
+    }
+
+    if (isTerminalHere) break;
+
+    const dx2 = bendEnd - ix;
+    parts.push(`C ${(ix + dx2 * 0.1).toFixed(1)} ${iy.toFixed(1)}, ${(bendEnd - dx2 * 0.65).toFixed(1)} ${baseY.toFixed(1)}, ${bendEnd.toFixed(1)} ${baseY.toFixed(1)}`);
+    cursorX = bendEnd;
+  }
+
+  const endX = yearToX(endYear, yearRange);
+  if (!terminal && cursorX < endX) parts.push(`L ${endX.toFixed(1)} ${baseY.toFixed(1)}`);
+
+  return parts.join(' ');
+}
+
+function evalCubicBezier(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  return mt*mt*mt*p0 + 3*mt*mt*t*p1 + 3*mt*t*t*p2 + t*t*t*p3;
+}
+
+function solveCubicBezierT(p0x, p1x, p2x, p3x, targetX) {
+  let lo = 0, hi = 1;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    evalCubicBezier(p0x, p1x, p2x, p3x, mid) < targetX ? (lo = mid) : (hi = mid);
+  }
+  return (lo + hi) / 2;
+}
+
+function getWorldYAtYear(spec, world, year) {
+  const yearRange     = spec.yearRange;
+  const baseY         = rowToY(world.row);
+  const pxPerYear     = PLOT_W / (yearRange[1] - yearRange[0]);
+  const bendWidthYears = BEND_WIDTH / pxPerYear;
+  const intersections = (spec.intersections || [])
+    .filter(i => i.worlds.includes(world.id))
+    .sort((a, b) => a.year - b.year);
+
+  for (const inter of intersections) {
+    const iy               = getIntersectionY(spec, inter);
+    const approachStartYear = inter.year - bendWidthYears;
+    const departureEndYear  = inter.year + bendWidthYears;
+
+    if (year >= approachStartYear && year <= inter.year) {
+      const approachStartX = yearToX(approachStartYear, yearRange);
+      const ix = yearToX(inter.year, yearRange);
+      const dx = ix - approachStartX;
+      if (dx <= 1) return iy;
+      const t = solveCubicBezierT(approachStartX, approachStartX + dx * 0.65, ix - dx * 0.1, ix, yearToX(year, yearRange));
+      return evalCubicBezier(baseY, baseY, iy, iy, t);
+    }
+    if (year > inter.year && year <= departureEndYear) {
+      const ix      = yearToX(inter.year, yearRange);
+      const bendEndX = ix + BEND_WIDTH;
+      const t = solveCubicBezierT(ix, ix + BEND_WIDTH * 0.1, bendEndX - BEND_WIDTH * 0.65, bendEndX, yearToX(year, yearRange));
+      return evalCubicBezier(iy, iy, baseY, baseY, t);
+    }
+  }
+
+  if (world.divergeFrom) {
+    const srcWorld  = spec.worlds.find(w => w.id === world.divergeFrom.world);
+    const fromY     = srcWorld ? rowToY(srcWorld.row) : baseY;
+    const divStartYear = world.divergeFrom.year;
+    const divEndYear   = divStartYear + bendWidthYears;
+    if (year >= divStartYear && year <= divEndYear) {
+      const startX  = yearToX(divStartYear, yearRange);
+      const endDivX = startX + BEND_WIDTH;
+      const t = solveCubicBezierT(startX, startX + BEND_WIDTH * 0.1, startX + BEND_WIDTH * 0.65, endDivX, yearToX(year, yearRange));
+      return evalCubicBezier(fromY, fromY, baseY, baseY, t);
+    }
+  }
+
+  return baseY;
+}
+
+function escapeXml(s) {
+  return String(s).replace(/[<>&"']/g, c =>
+    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]));
+}
+
+function slugifyId(str) {
+  return String(str).toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'event';
+}
+
+function genUniqueMarkerId(base, existingIds) {
+  if (!existingIds.has(base)) return base;
+  let i = 2;
+  while (existingIds.has(`${base}-${i}`)) i++;
+  return `${base}-${i}`;
+}
+
+function shadeColor(hex, clone) {
+  if (!clone) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lighten = (clone % 2 === 1);
+  const amount  = Math.ceil(clone / 2) * 0.28;
+  const target  = lighten ? 255 : 0;
+  const clamp   = v => Math.max(0, Math.min(255, Math.round(v)));
+  return '#' + [r, g, b]
+    .map(c => clamp(c + (target - c) * amount).toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function sineArcPath(x0, y0, cx, cy, x1, y1, amplitude, cycles, samples) {
+  const pts = [];
+  for (let i = 0; i <= samples; i++) {
+    const t  = i / samples;
+    const mt = 1 - t;
+    const px = mt*mt*x0 + 2*mt*t*cx + t*t*x1;
+    const py = mt*mt*y0 + 2*mt*t*cy + t*t*y1;
+    const dx = 2*(1-t)*(cx-x0) + 2*t*(x1-cx);
+    const dy = 2*(1-t)*(cy-y0) + 2*t*(y1-cy);
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const offset = amplitude * Math.sin(t * cycles * Math.PI * 2);
+    pts.push([px + offset * (-dy/len), py + offset * (dx/len)]);
+  }
+  return 'M ' + pts.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L ');
+}
+
+function render(spec) {
+  const yearRange = spec.yearRange;
+  const numRows   = Math.max(...spec.worlds.map(w => w.row)) + 1;
+  const VIEW_H    = rowToY(numRows - 1) + 55; // last row centre + 55px for labels/breathing room
+
+  const parts = [];
+  parts.push(`<svg width="100%" viewBox="0 0 ${VIEW_W} ${VIEW_H}" xmlns="http://www.w3.org/2000/svg" role="img">`);
+  parts.push(`<title>Dark timeline diagram</title>`);
+  parts.push(`<desc>Timeline graph generated from JSON spec</desc>`);
+
+  parts.push(`<rect x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" fill="#141418"/>`);
+
+  parts.push(`<defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <filter id="travel-glow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="wide"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="tight"/>
+      <feMerge>
+        <feMergeNode in="wide"/>
+        <feMergeNode in="tight"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrow-mid" viewBox="-11 -6 13 12" refX="0" refY="0" markerWidth="16" markerHeight="16" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0 0 L -10 -5 L -6 0 L -10 5 Z" fill="context-stroke" stroke="none"/>
+    </marker>
+  </defs>`);
+
+  // Time axis
+  parts.push(`<text x="${VIEW_W/2}" y="20" text-anchor="middle" font-family="sans-serif" font-size="10px" letter-spacing="1" fill="${MUTED}" opacity="0.7">TIME →</text>`);
+  parts.push(`<line x1="${LEFT_MARGIN - 20}" y1="28" x2="${VIEW_W - 20}" y2="28" stroke="${MUTED}" stroke-width="0.5" opacity="0.3"/>`);
+
+  for (let y = Math.ceil(yearRange[0] / 25) * 25; y <= yearRange[1]; y += 25) {
+    const x = yearToX(y, yearRange);
+    parts.push(`<line x1="${x}" y1="28" x2="${x}" y2="32" stroke="${MUTED}" stroke-width="0.5" opacity="0.4"/>`);
+    parts.push(`<text x="${x}" y="42" text-anchor="middle" font-family="sans-serif" font-size="9px" fill="${MUTED}" opacity="0.7">${y}</text>`);
+  }
+
+  // Intersection rings
+  for (const inter of (spec.intersections || [])) {
+    const ix = yearToX(inter.year, yearRange);
+    const iy = getIntersectionY(spec, inter);
+    parts.push(`<circle cx="${ix}" cy="${iy}" r="${INTERSECTION_RADIUS}" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>`);
+  }
+
+  // Node rings
+  for (const node of (spec.nodes || [])) {
+    const world = spec.worlds.find(w => w.id === node.world);
+    if (!world) continue;
+    const nx = yearToX(node.year, yearRange);
+    const ny = getWorldYAtYear(spec, world, node.year);
+    parts.push(`<circle cx="${nx}" cy="${ny}" r="${NODE_RADIUS}" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>`);
+  }
+
+  // World paths + labels
+  for (const world of spec.worlds) {
+    const path     = buildWorldPath(spec, world);
+    const weight   = world.weight || 1.5;
+    const terminal = worldTerminatesAtIntersection(spec, world);
+    const arrowAttr = terminal ? '' : ' marker-end="url(#arrow)"';
+    parts.push(`<path d="${path}" fill="none" stroke="${world.color}" stroke-width="${weight}" stroke-linejoin="round"${arrowAttr}/>`);
+    // Scale font down if label would overflow the left margin (available px = LEFT_MARGIN - 12)
+    const _maxLW = LEFT_MARGIN - 12;
+    const _approxW = world.label.length * 7.8; // ~7.8px per char at 13px sans-serif 500
+    const _fs = _approxW > _maxLW ? Math.max(7, Math.round(13 * _maxLW / _approxW)) : 13;
+    parts.push(`<text x="${LEFT_MARGIN - 8}" y="${rowToY(world.row)}" text-anchor="end" dominant-baseline="central" font-family="sans-serif" font-size="${_fs}px" font-weight="500" fill="${world.color}">${escapeXml(world.label)}</text>`);
+  }
+
+  // Segments
+  for (const seg of (spec.segments || [])) {
+    const world = spec.worlds.find(w => w.id === seg.world);
+    if (!world) continue;
+    const x1 = yearToX(seg.from, yearRange);
+    const x2 = yearToX(seg.to,   yearRange);
+    const y1 = getWorldYAtYear(spec, world, seg.from);
+    const y2 = getWorldYAtYear(spec, world, seg.to);
+    parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${world.color}" stroke-width="5" stroke-linecap="round" opacity="0.35"/>`);
+    if (seg.label) {
+      const midX  = (x1 + x2) / 2;
+      const midY  = (y1 + y2) / 2;
+      const above = seg.labelSide === 'above';
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(above ? midY - 10 : midY + 14).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="8px" font-style="italic" letter-spacing="0.5" fill="${world.color}" opacity="0.75">${escapeXml(seg.label)}</text>`);
+    }
+  }
+
+  // Wormhole arcs
+  function drawTick(cx, cy, color) {
+    parts.push(`<line x1="${cx}" y1="${cy - 5}" x2="${cx}" y2="${cy + 5}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`);
+  }
+  function drawOpenRing(cx, cy, color) {
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="3.5" fill="none" stroke="${color}" stroke-width="1.5"/>`);
+  }
+
+  for (const wormhole of (spec.wormholes || [])) {
+    const world = spec.worlds.find(w => w.id === wormhole.world);
+    if (!world) continue;
+    const anchorX   = yearToX(wormhole.anchor, yearRange);
+    const anchorY   = getWorldYAtYear(spec, world, wormhole.anchor);
+    const side      = wormhole.side === 'below' ? 1 : -1;
+    const isWindowed = !!wormhole.window;
+
+    const anchorAtIntersection = findIntersectionForWorldYear(spec, world.id, wormhole.anchor);
+    if (!anchorAtIntersection) {
+      isWindowed ? drawTick(anchorX, anchorY, world.color) : drawOpenRing(anchorX, anchorY, world.color);
+      parts.push(`<text x="${anchorX}" y="${side < 0 ? anchorY - 10 : anchorY + 15}" text-anchor="middle" font-family="sans-serif" font-size="9px" fill="${world.color}" opacity="0.9">${wormhole.anchor}</text>`);
+    }
+
+    for (const jumpYear of wormhole.jumps) {
+      const jx        = yearToX(jumpYear, yearRange);
+      const jy        = getWorldYAtYear(spec, world, jumpYear);
+      const dx        = jx - anchorX;
+      const arcHeight = Math.min(36, Math.max(14, Math.abs(dx) * 0.35));
+      const midX      = (anchorX + jx) / 2;
+      const midY      = (anchorY + jy) / 2 + side * arcHeight;
+      parts.push(`<path d="${sineArcPath(anchorX, anchorY, midX, midY, jx, jy, 2, 5, 48)}" fill="none" stroke="${world.color}" stroke-width="1.2" opacity="0.85"/>`);
+      const jumpAtNode = (spec.nodes || []).some(n => n.world === wormhole.world && n.year === jumpYear);
+      if (!jumpAtNode) {
+        isWindowed ? drawTick(jx, jy, world.color) : drawOpenRing(jx, jy, world.color);
+      }
+      parts.push(`<text x="${jx}" y="${side < 0 ? jy - 10 : jy + 15}" text-anchor="middle" font-family="sans-serif" font-size="9px" fill="${MUTED}" opacity="0.85">${jumpYear}</text>`);
+    }
+  }
+
+  // Travel arcs
+  for (let i = 0; i < (spec.travels || []).length; i++) {
+    const travel    = spec.travels[i];
+    const char      = (spec.characters || []).find(c => c.id === travel.character);
+    if (!char) continue;
+    const fromWorld = spec.worlds.find(w => w.id === travel.from.world);
+    const toWorld   = spec.worlds.find(w => w.id === travel.to.world);
+    if (!fromWorld || !toWorld) continue;
+
+    const color     = shadeColor(char.color, travel.clone || 0);
+    const fromX     = yearToX(travel.from.year, yearRange);
+    const fromY     = getWorldYAtYear(spec, fromWorld, travel.from.year);
+    const toX       = yearToX(travel.to.year,   yearRange);
+    const toY       = getWorldYAtYear(spec, toWorld,   travel.to.year);
+    const rowDist   = Math.abs(fromWorld.row - toWorld.row);
+    const pastward  = travel.to.year < travel.from.year;
+    const side      = pastward ? -1 : 1;
+    const arcHeight = rowDist > 0
+      ? Math.max(rowDist * ROW_HEIGHT * 0.55, 28)
+      : Math.max(20, Math.abs(toX - fromX) * 0.18);
+    const midX = (fromX + toX) / 2;
+    const midY = (fromY + toY) / 2 + side * arcHeight;
+
+    const interWorld = rowDist > 0;
+    let splitPathD;
+
+    if (travel.type === 'normal') {
+      const oy    = rowToY(fromWorld.row) + 3;
+      const pathD = `M ${fromX.toFixed(1)} ${oy.toFixed(1)} L ${toX.toFixed(1)} ${oy.toFixed(1)}`;
+      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 3" opacity="0.08"/>`);
+      parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${oy.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${oy.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+    } else if (interWorld) {
+      const yearDiff = travel.to.year - travel.from.year;
+      const sweepDir = yearDiff >= 0 ? 1 : -1;
+      const sweepAmt = Math.max(60, Math.min(90, Math.abs(toX - fromX) * 0.12 + 55));
+      const sw       = (fromX + toX) / 2 + sweepDir * sweepAmt;
+      const pathD    = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} C ${sw.toFixed(1)} ${fromY.toFixed(1)}, ${sw.toFixed(1)} ${toY.toFixed(1)}, ${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="5 4" opacity="0.18" filter="url(#travel-glow)"/>`);
+      const c1ax = (fromX + sw) / 2,          c1ay = fromY;
+      const c1bx = (fromX + 3*sw) / 4,        c1by = (3*fromY + toY) / 4;
+      const Sx   = (fromX + 6*sw + toX) / 8,  Sy   = (fromY + toY) / 2;
+      const c2ax = (3*sw + toX) / 4,          c2ay = (fromY + 3*toY) / 4;
+      const c2bx = (sw + toX) / 2,            c2by = toY;
+      splitPathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} C ${c1ax.toFixed(1)} ${c1ay.toFixed(1)},${c1bx.toFixed(1)} ${c1by.toFixed(1)},${Sx.toFixed(1)} ${Sy.toFixed(1)} C ${c2ax.toFixed(1)} ${c2ay.toFixed(1)},${c2bx.toFixed(1)} ${c2by.toFixed(1)},${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none" filter="url(#travel-glow)"/>`);
+      parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${fromY.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${toY.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+    } else {
+      const pathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)}, ${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4 3" opacity="0.08"/>`);
+      const c1x = (fromX + midX) / 2, c1y = (fromY + midY) / 2;
+      const c2x = (midX + toX) / 2,   c2y = (midY + toY) / 2;
+      const Sx  = (c1x + c2x) / 2,    Sy  = (c1y + c2y) / 2;
+      splitPathD = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} Q ${c1x.toFixed(1)} ${c1y.toFixed(1)},${Sx.toFixed(1)} ${Sy.toFixed(1)} Q ${c2x.toFixed(1)} ${c2y.toFixed(1)},${toX.toFixed(1)} ${toY.toFixed(1)}`;
+      parts.push(`<path id="travel-arrow-${i}" d="${splitPathD}" fill="none" stroke="${color}" stroke-width="0.01" stroke-opacity="0" marker-mid="url(#arrow-mid)" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-from" cx="${fromX.toFixed(1)}" cy="${fromY.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+      parts.push(`<circle id="travel-dot-${i}-to"   cx="${toX.toFixed(1)}"   cy="${toY.toFixed(1)}"   r="4" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.5" display="none"/>`);
+    }
+  }
+
+  // Welds
+  for (const weld of (spec.welds || [])) {
+    const fromWorld = spec.worlds.find(w => w.id === weld.from.world);
+    const toWorld   = spec.worlds.find(w => w.id === weld.to.world);
+    if (!fromWorld || !toWorld) continue;
+    const fx    = yearToX(weld.from.year, yearRange);
+    const tx    = yearToX(weld.to.year,   yearRange);
+    const midX  = ((fx + tx) / 2).toFixed(1);
+    const allRows = spec.worlds.map(w => w.row);
+    const topY  = (rowToY(Math.min(...allRows)) - 12).toFixed(1);
+    const botY  = (rowToY(Math.max(...allRows)) + 12).toFixed(1);
+    parts.push(`<line x1="${midX}" y1="${topY}" x2="${midX}" y2="${botY}" stroke="#D85A30" stroke-width="5" opacity="0.08"/>`);
+    parts.push(`<line x1="${midX}" y1="${topY}" x2="${midX}" y2="${botY}" stroke="#D85A30" stroke-width="1" opacity="0.55"/>`);
+    if (weld.label) {
+      const labelY = ((parseFloat(topY) + parseFloat(botY)) / 2).toFixed(1);
+      parts.push(`<text transform="rotate(-90,${parseFloat(midX) - 10},${labelY})" x="${parseFloat(midX) - 10}" y="${labelY}" text-anchor="middle" font-family="sans-serif" font-size="8px" font-style="italic" letter-spacing="0.5" fill="#D85A30" opacity="0.7">${escapeXml(weld.label)}</text>`);
+    }
+  }
+
+  // Cycle markers
+  {
+    const allRows = spec.worlds.map(w => w.row);
+    const topY    = (rowToY(Math.min(...allRows)) - 16).toFixed(1);
+    const botY    = (rowToY(Math.max(...allRows)) + 16).toFixed(1);
+    for (const cycle of (spec.cycles || [])) {
+      const cx    = yearToX(cycle.year, yearRange).toFixed(1);
+      const color = cycle.color || '#C8A951';
+      parts.push(`<line x1="${cx}" y1="${topY}" x2="${cx}" y2="${botY}" stroke="${color}" stroke-width="0.75" stroke-dasharray="2 5" opacity="0.38"/>`);
+      if (cycle.label) {
+        parts.push(`<text x="${cx}" y="${(parseFloat(botY) + 11).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="7px" letter-spacing="0.5" fill="${color}" opacity="0.55">${escapeXml(cycle.label)}</text>`);
+      }
+    }
+  }
+
+  // Intersection dots + labels
+  for (const inter of (spec.intersections || [])) {
+    const ix = yearToX(inter.year, yearRange);
+    const iy = getIntersectionY(spec, inter);
+    parts.push(`<circle cx="${ix}" cy="${iy}" r="5" fill="#EF9F27"/>`);
+    if (inter.label) {
+      parts.push(`<text x="${ix}" y="${iy + INTERSECTION_RADIUS + 12}" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="600" fill="#854F0B">${escapeXml(inter.label)}</text>`);
+      parts.push(`<text x="${ix}" y="${iy + INTERSECTION_RADIUS + 23}" text-anchor="middle" font-family="sans-serif" font-size="8px" fill="#854F0B" opacity="0.7">${inter.year}</text>`);
+    }
+  }
+
+  // Node dots + labels
+  for (let ni = 0; ni < (spec.nodes || []).length; ni++) {
+    const node  = spec.nodes[ni];
+    const world = spec.worlds.find(w => w.id === node.world);
+    if (!world) continue;
+    const nx  = yearToX(node.year, yearRange);
+    const ny  = getWorldYAtYear(spec, world, node.year);
+    const cat = node.category ? CATEGORIES.find(c => c.id === node.category) : null;
+    const dotColor = cat ? cat.color : '#EF9F27';
+    parts.push(`<circle cx="${nx}" cy="${ny}" r="3.5" fill="${dotColor}" data-node-idx="${ni}" style="cursor:pointer"/>`);
+    if (cat) {
+      parts.push(`<text x="${nx}" y="${(ny - 7).toFixed(1)}" text-anchor="middle" font-size="11px" font-family="sans-serif" pointer-events="none">${cat.icon}</text>`);
+    }
+    if (node.label) {
+      parts.push(`<text x="${nx}" y="${ny + NODE_RADIUS + 11}" text-anchor="middle" font-family="sans-serif" font-size="9px" fill="${dotColor}" pointer-events="none">${escapeXml(node.label)}</text>`);
+      parts.push(`<text x="${nx}" y="${ny + NODE_RADIUS + 21}" text-anchor="middle" font-family="sans-serif" font-size="8px" fill="${dotColor}" opacity="0.7" pointer-events="none">${node.year}</text>`);
+    }
+  }
+
+  // Branches — dashed arc from (fromWorld, fromYear) to (newWorld, toYear)
+  for (const branch of (spec.branches || [])) {
+    const fromWorld = spec.worlds.find(w => w.id === branch.fromWorld);
+    const newWorld  = spec.worlds.find(w => w.id === branch.newWorld);
+    if (!fromWorld || !newWorld) continue;
+    const toYear = branch.toYear !== undefined ? branch.toYear : branch.fromYear;
+    const bx = yearToX(branch.fromYear, yearRange);
+    const by = getWorldYAtYear(spec, fromWorld, branch.fromYear);
+    const tx = yearToX(toYear, yearRange);
+    const ty = getWorldYAtYear(spec, newWorld, toYear);
+    const pastward  = toYear < branch.fromYear;
+    const side      = pastward ? -1 : 1;
+    const arcHeight = Math.max(18, Math.abs(tx - bx) * 0.22 + Math.abs(ty - by) * 0.3);
+    const midX = (bx + tx) / 2;
+    const midY = (by + ty) / 2 + side * arcHeight;
+    parts.push(`<path d="M ${bx.toFixed(1)} ${by.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)}, ${tx.toFixed(1)} ${ty.toFixed(1)}" fill="none" stroke="${newWorld.color}" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8"/>`);
+    parts.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="3.5" fill="${newWorld.color}" opacity="0.8"/>`);
+    parts.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="3.5" fill="${newWorld.color}" opacity="0.8"/>`);
+  }
+
+  // Marker beads
+  const markerPositions = [];
+  for (let i = 0; i < (spec.markers || []).length; i++) {
+    const marker = spec.markers[i];
+    const world  = spec.worlds.find(w => w.id === marker.world);
+    if (!world) continue;
+    const mx     = yearToX(marker.year, yearRange);
+    const my     = getWorldYAtYear(spec, world, marker.year);
+    const cat    = marker.category ? CATEGORIES.find(c => c.id === marker.category) : null;
+    const color  = cat ? cat.color : (marker.color || world.color);
+    const hasLabel = !!marker.label;
+    const cursorStyle = hasLabel ? 'cursor:pointer' : 'cursor:default';
+    parts.push(`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="3" fill="${color}" stroke="white" stroke-width="1.5" stroke-opacity="0.35" data-marker-idx="${i}" style="${cursorStyle}"/>`);
+    if (cat) {
+      parts.push(`<text x="${mx.toFixed(1)}" y="${(my - 7).toFixed(1)}" text-anchor="middle" font-size="11px" font-family="sans-serif" pointer-events="none">${cat.icon}</text>`);
+    }
+    if (hasLabel) markerPositions.push({ i, marker, mx, my, color });
+  }
+
+  // Annotation callouts
+  for (const { i, marker, mx, my, color } of markerPositions) {
+    const cat     = marker.category ? CATEGORIES.find(c => c.id === marker.category) : null;
+    const dispLabel = cat ? `${cat.icon} ${marker.label}` : marker.label;
+    const yearStr = String(marker.year);
+    const boxW    = Math.max(dispLabel.length * 6.0, yearStr.length * 5.5) + 22;
+    const boxH    = 34;
+    const above   = my - boxH - 12 >= 8;
+    const boxY    = above ? my - boxH - 12 : my + 10;
+    const arrowTipY  = above ? my - 4 : my + 4;
+    const arrowBaseY = above ? boxY + boxH : boxY;
+    const boxX       = Math.min(Math.max(mx - boxW / 2, LEFT_MARGIN - 6), VIEW_W - RIGHT_MARGIN - boxW + 6);
+    const textCX     = boxX + boxW / 2;
+    const arrowBaseX = Math.min(Math.max(mx, boxX + 8), boxX + boxW - 8);
+
+    parts.push(`<g id="annot-${i}" display="none">`);
+    parts.push(`<rect x="${(boxX + 1).toFixed(1)}" y="${(boxY + 2).toFixed(1)}" width="${boxW.toFixed(1)}" height="${boxH}" rx="4" fill="black" opacity="0.2"/>`);
+    parts.push(`<path d="M ${mx.toFixed(1)} ${arrowTipY} L ${(arrowBaseX - 5).toFixed(1)} ${arrowBaseY} L ${(arrowBaseX + 5).toFixed(1)} ${arrowBaseY} Z" fill="#1c1c1c"/>`);
+    parts.push(`<rect x="${boxX.toFixed(1)}" y="${boxY.toFixed(1)}" width="${boxW.toFixed(1)}" height="${boxH}" rx="4" fill="#1c1c1c"/>`);
+    parts.push(`<text x="${textCX.toFixed(1)}" y="${(boxY + 14).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="10px" font-weight="500" fill="${color}">${escapeXml(dispLabel)}</text>`);
+    parts.push(`<text x="${textCX.toFixed(1)}" y="${(boxY + 27).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="9px" fill="rgba(255,255,255,0.45)">${yearStr}</text>`);
+    parts.push(`</g>`);
+  }
+
+  // Causal link arcs
+  const linkPopups = [];
+  const linksBySource = {};
+  for (let li = 0; li < (spec.causalLinks || []).length; li++) {
+    const lnk = spec.causalLinks[li];
+    const key = lnk.from.eventId || `${lnk.from.world}:${lnk.from.year}`;
+    if (!linksBySource[key]) linksBySource[key] = [];
+    linksBySource[key].push(li);
+  }
+
+  for (let li = 0; li < (spec.causalLinks || []).length; li++) {
+    const lnk     = spec.causalLinks[li];
+    const fromRef = resolveEventRef(spec, lnk.from);
+    const toRef   = resolveEventRef(spec, lnk.to);
+    if (!fromRef || !toRef) continue;
+    const fromWorld = spec.worlds.find(w => w.id === fromRef.world);
+    const toWorld   = spec.worlds.find(w => w.id === toRef.world);
+    if (!fromWorld || !toWorld) continue;
+
+    const srcX = yearToX(fromRef.year, yearRange);
+    const srcY = getWorldYAtYear(spec, fromWorld, fromRef.year);
+    const tx   = yearToX(toRef.year, yearRange);
+    const ty   = getWorldYAtYear(spec, toWorld, toRef.year);
+
+    const fromMarker = fromRef.type === 'marker' ? (spec.markers || []).find(m => m.id === lnk.from.eventId) : null;
+    const mcat  = fromMarker?.category ? CATEGORIES.find(c => c.id === fromMarker.category) : null;
+    const color = mcat ? mcat.color : (fromMarker?.color || fromWorld.color);
+
+    const backwards = toRef.year < fromRef.year;
+    const side = backwards ? 1 : -1;
+    const arcH  = Math.max(22, Math.abs(tx - srcX) * 0.18 + Math.abs(ty - srcY) * 0.25);
+    const cpX   = (srcX + tx) / 2;
+    const cpY   = (srcY + ty) / 2 + side * arcH;
+
+    // Split quadratic Bezier at t=0.5 to place a vertex for marker-mid
+    const bmX   = 0.25 * srcX + 0.5 * cpX + 0.25 * tx;
+    const bmY   = 0.25 * srcY + 0.5 * cpY + 0.25 * ty;
+    const q1cx  = (srcX + cpX) / 2;
+    const q1cy  = (srcY + cpY) / 2;
+    const q2cx  = (cpX + tx) / 2;
+    const q2cy  = (cpY + ty) / 2;
+
+    const pathD = `M ${srcX.toFixed(1)} ${srcY.toFixed(1)} Q ${q1cx.toFixed(1)} ${q1cy.toFixed(1)}, ${bmX.toFixed(1)} ${bmY.toFixed(1)} Q ${q2cx.toFixed(1)} ${q2cy.toFixed(1)}, ${tx.toFixed(1)} ${ty.toFixed(1)}`;
+
+    const srcKey     = lnk.from.eventId || `${lnk.from.world}:${lnk.from.year}`;
+    const numInGroup = linksBySource[srcKey].indexOf(li) + 1;
+    const arrow      = toRef.year >= fromRef.year ? '→' : '←';
+
+    const pillText = String(numInGroup);
+    const pillR = 8.5;
+
+    const dx = tx - srcX;
+    const dy = ty - srcY;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const vx = dx / len;
+    const vy = dy / len;
+    const nx = -vy;
+    const ny = vx;
+
+    // Integrated graphic: Circle + Arrowhead
+    const tipX = bmX + vx * 13.5;
+    const tipY = bmY + vy * 13.5;
+    const b1x = bmX + vx * 7 + nx * 5.5;
+    const b1y = bmY + vy * 7 + ny * 5.5;
+    const b2x = bmX + vx * 7 - nx * 5.5;
+    const b2y = bmY + vy * 7 - ny * 5.5;
+    const arrowD = `M ${tipX.toFixed(1)} ${tipY.toFixed(1)} L ${b1x.toFixed(1)} ${b1y.toFixed(1)} L ${b2x.toFixed(1)} ${b2y.toFixed(1)} Z`;
+
+    parts.push(`<path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.2" stroke-dasharray="5 3" opacity="0.65" pointer-events="none" data-link-vis="${li}"/>`);
+    parts.push(`<path d="${pathD}" fill="none" stroke="transparent" stroke-width="10" data-link-idx="${li}" style="cursor:pointer"/>`);
+    
+    parts.push(`<g data-link-pill-idx="${li}" style="cursor:pointer">`);
+    parts.push(`<path d="${arrowD}" fill="${color}" opacity="0.92"/>`);
+    parts.push(`<circle cx="${bmX.toFixed(1)}" cy="${bmY.toFixed(1)}" r="${pillR}" fill="#141418" stroke="${color}" stroke-width="1.2" opacity="0.92"/>`);
+    parts.push(`<text x="${bmX.toFixed(1)}" y="${(bmY+3.5).toFixed(1)}" text-anchor="middle" font-size="9px" font-family="sans-serif" font-weight="bold" fill="${color}" opacity="0.95" pointer-events="none">${escapeXml(pillText)}</text>`);
+    parts.push(`</g>`);
+
+    linkPopups.push({ li, lnk, fromRef, toRef, color, bmX, bmY, arrow, numInGroup });
+  }
+
+  // Link popup callouts (rendered last so they sit on top)
+  for (const { li, lnk, fromRef, toRef, color, bmX, bmY, arrow, numInGroup } of linkPopups) {
+    const destName = toRef.label ? `${toRef.label} (${toRef.year})` : `${toRef.world} / ${toRef.year}`;
+    const line1    = lnk.criteria || `${arrow}${circled(numInGroup)}`;
+    const line2    = `→ ${destName}`;
+    const hasNotes = !!lnk.notes;
+    const boxW     = Math.max(line1.length * 6.2, line2.length * 5.6, 80) + 24;
+    const boxH     = hasNotes ? 58 : 44;
+    const boxX     = Math.min(Math.max(bmX - boxW / 2, LEFT_MARGIN - 6), VIEW_W - RIGHT_MARGIN - boxW + 6);
+    const boxY     = bmY - boxH - 15;
+    const tipX     = Math.min(Math.max(bmX, boxX + 8), boxX + boxW - 8);
+
+    parts.push(`<g id="link-annot-${li}" display="none">`);
+    parts.push(`<rect x="${(boxX+1).toFixed(1)}" y="${(boxY+2).toFixed(1)}" width="${boxW.toFixed(1)}" height="${boxH}" rx="4" fill="black" opacity="0.2"/>`);
+    parts.push(`<path d="M ${bmX.toFixed(1)} ${(bmY-2).toFixed(1)} L ${(tipX-5).toFixed(1)} ${boxY+boxH} L ${(tipX+5).toFixed(1)} ${boxY+boxH} Z" fill="#1c1c1c"/>`);
+    parts.push(`<rect x="${boxX.toFixed(1)}" y="${boxY.toFixed(1)}" width="${boxW.toFixed(1)}" height="${boxH}" rx="4" fill="#1c1c1c"/>`);
+    parts.push(`<text x="${(boxX+10).toFixed(1)}" y="${(boxY+14).toFixed(1)}" font-family="sans-serif" font-size="10px" font-weight="500" fill="${color}">${arrow}${circled(numInGroup)}${lnk.criteria ? '  ' + escapeXml(lnk.criteria) : ''}</text>`);
+    parts.push(`<text x="${(boxX+10).toFixed(1)}" y="${(boxY+27).toFixed(1)}" font-family="sans-serif" font-size="9px" fill="rgba(255,255,255,0.45)">${escapeXml(line2)}</text>`);
+    if (hasNotes) parts.push(`<text x="${(boxX+10).toFixed(1)}" y="${(boxY+40).toFixed(1)}" font-family="sans-serif" font-size="9px" fill="rgba(255,255,255,0.3)" font-style="italic">${escapeXml(lnk.notes)}</text>`);
+    parts.push(`</g>`);
+  }
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+// ====================================================================
+// SECTION 2: Spec State
+// ====================================================================
+
+let spec = {
+  yearRange: [1900, 2100],
+  worlds: [],
+  intersections: [],
+  wormholes: [],
+  segments: [],
+  welds: [],
+  cycles: [],
+  nodes: [],
+  markers: [],
+  branches: [],
+  causalLinks: []
+};
+
+// Default color palette cycling for new worlds
+const WORLD_PALETTE = ['#6688cc','#D4537E','#1D9E75','#E6834A','#9B59B6','#E74C3C','#F1C40F','#1ABC9C'];
+
+// ====================================================================
+// SECTION 3: Core render + sync
+// ====================================================================
+
+const container     = document.getElementById('diagram-container');
+const jsonTextarea  = document.getElementById('json-textarea');
+const errorBanner   = document.getElementById('error-banner');
+const statusEl      = document.getElementById('status');
+let _activeAnnotId    = null;
+let _activeLinkAnnotId = null;
+let jsonDebounce      = null;
+
+function liveRender() {
+  try {
+    errorBanner.textContent = '';
+    errorBanner.style.display = 'none';
+    if (!spec.worlds || spec.worlds.length === 0) {
+      container.innerHTML = '<div class="empty-state">Add a timeline to begin</div>';
+      return;
+    }
+    container.innerHTML = render(spec);
+    attachMarkerInteractivity();
+    attachHoverOverlay();
+    attachLinkDrawOverlay();
+    if (linkDrawMode !== null) attachLinkSourceRing();
+    // Restore link arc highlight after re-render (card element survives since it's outside #diagram-container)
+    if (_popover?.type === 'link' && spec.causalLinks?.[_popover.idx]) {
+      document.querySelectorAll('[data-link-vis]').forEach(el => el.setAttribute('opacity', '0.38'));
+      const arc = container.querySelector(`[data-link-vis="${_popover.idx}"]`);
+      if (arc) arc.setAttribute('opacity', '1');
+    }
+  } catch(e) {
+    showError(e.message);
+  }
+  if (linkDrawMode !== null) updateLinkDrawStatus();
+}
+
+function syncJsonPanel() {
+  jsonTextarea.value = JSON.stringify(spec, null, 2);
+}
+
+function loadFromJson(text) {
+  try {
+    const parsed = JSON.parse(text);
+
+    // Migrate marker.branches[] → spec.causalLinks[]
+    const causalLinks = parsed.causalLinks ? [...parsed.causalLinks] : [];
+    for (const m of (parsed.markers || [])) {
+      for (const b of (m.branches || [])) {
+        const entry = {
+          from: m.id ? { eventId: m.id } : { world: m.world, year: m.year },
+          to:   b.to
+        };
+        if (b.criteria) entry.criteria = b.criteria;
+        if (b.notes)    entry.notes    = b.notes;
+        causalLinks.push(entry);
+      }
+    }
+
+    const rawMarkers = (parsed.markers || []).map(m => { const {branches, ...rest} = m; return rest; });
+
+    // Ensure every marker has a unique id
+    const usedIds = new Set([
+      ...rawMarkers.filter(m => m.id).map(m => m.id),
+      ...(parsed.nodes || []).filter(n => n.id).map(n => n.id)
+    ]);
+    for (const m of rawMarkers) {
+      if (!m.id) {
+        const id = genUniqueMarkerId(slugifyId(m.label || 'marker'), usedIds);
+        m.id = id;
+        usedIds.add(id);
+      }
+    }
+
+    spec = {
+      yearRange:     parsed.yearRange     || [1900, 2100],
+      worlds:        parsed.worlds        || [],
+      intersections: parsed.intersections || [],
+      wormholes:     parsed.wormholes     || [],
+      segments:      parsed.segments      || [],
+      welds:         parsed.welds         || [],
+      cycles:        parsed.cycles        || [],
+      nodes:         parsed.nodes         || [],
+      markers:       rawMarkers,
+      branches:      parsed.branches      || [],
+      causalLinks
+    };
+    document.getElementById('setup-start-year').value = spec.yearRange[0];
+    document.getElementById('setup-end-year').value   = spec.yearRange[1];
+    cancelLinkDraw();
+    liveRender();
+    syncJsonPanel();
+    updateAllSelectors();
+    updateEventSelectors();
+    refreshAllItemLists();
+  } catch(e) {
+    showError('JSON parse error: ' + e.message);
+  }
+}
+
+function showError(msg) {
+  errorBanner.textContent = msg;
+  errorBanner.style.display = 'block';
+}
+
+function flash(msg) {
+  statusEl.textContent = msg;
+  statusEl.classList.add('show');
+  setTimeout(() => statusEl.classList.remove('show'), 1800);
+}
+
+// ====================================================================
+// SECTION 4: Selector refresh utilities
+// ====================================================================
+
+function updateAllSelectors() {
+  document.querySelectorAll('[data-world-selector]').forEach(sel => {
+    const cur = sel.value;
+    const none = sel.id === 'world-diverge-from-world' ? '— none —' : '— select —';
+    sel.innerHTML = `<option value="">${none}</option>` +
+      spec.worlds.map(w =>
+        `<option value="${w.id}"${w.id === cur ? ' selected' : ''}>${escapeXml(w.label)} (${w.id})</option>`
+      ).join('');
+  });
+  buildIntersectionCheckboxes();
+  // Auto-suggest next color for new world
+  const nextColor = WORLD_PALETTE[spec.worlds.length % WORLD_PALETTE.length];
+  document.getElementById('world-color').value = nextColor;
+  // Auto-suggest next row
+  if (!document.getElementById('world-row').value) {
+    const maxRow = spec.worlds.reduce((m, w) => Math.max(m, w.row), -1);
+    document.getElementById('world-row').value = maxRow + 1;
+  }
+}
+
+function refreshAllItemLists() {
+  refreshWorldsItemList();
+  refreshNodesItemList();
+  refreshMarkersItemList();
+  refreshWeldsItemList();
+  refreshIntersectionsItemList();
+  refreshBranchesItemList();
+  refreshWormholesItemList();
+  refreshCyclesItemList();
+  refreshLinksItemList();
+}
+
+// ====================================================================
+// SECTION 5: Tab navigation
+// ====================================================================
+
+function showTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById(`tab-${name}`);
+  const btn  = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if (pane) pane.classList.add('active');
+  if (btn)  btn.classList.add('active');
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn =>
+  btn.addEventListener('click', () => showTab(btn.dataset.tab))
+);
+
+// ====================================================================
+// SECTION 6: Setup tab
+// ====================================================================
+
+function setYearRange() {
+  const s = parseInt(document.getElementById('setup-start-year').value);
+  const e = parseInt(document.getElementById('setup-end-year').value);
+  if (isNaN(s) || isNaN(e) || s >= e) { showError('Start year must be less than end year'); return; }
+  spec.yearRange = [s, e];
+  liveRender(); syncJsonPanel();
+}
+
+document.getElementById('setup-start-year').addEventListener('change', setYearRange);
+document.getElementById('setup-end-year').addEventListener('change', setYearRange);
+
+const DARK_STUB_SPEC = {
+  yearRange: [1880, 2060],
+  worlds: [
+    { id: 'eva',      label: 'Eva',      color: '#D4537E', row: 0 },
+    { id: 'adam',     label: 'Adam',      color: '#378ADD', row: 1 },
+    { id: 'origin',   label: 'Origin',    color: '#888780', row: 2, endYear: 1986 },
+    { id: 'paradise', label: 'Paradise',  color: '#1D9E75', row: 3, divergeFrom: { world: 'origin', year: 1971 } }
+  ],
+  intersections: [{ year: 1986, worlds: ['adam','eva','origin'], label: 'Tannhaus Event' }],
+  wormholes: [
+    { world: 'adam', anchor: 1986, jumps: [1953, 2019], side: 'below', window: { open: 'Jun 1986', close: 'Nov 1986' }  },
+    { world: 'eva',  anchor: 1986, jumps: [2019, 2052], side: 'below', window: { open: 'Jun 1986', close: 'Jun 1987' } }
+  ],
+  segments: [
+    { world: 'adam', from: 1888, to: 1921, label: 'Sic Mundus' },
+    { world: 'adam', from: 2020, to: 2053, label: 'Post-Apocalypse' }
+  ],
+  welds: [
+    { from: { world: 'adam', year: 2020 }, to: { world: 'eva', year: 2020 }, label: 'Apocalypse' }
+  ],
+  cycles: [
+    { year: 1888, label: '-3' }, { year: 1921, label: '-2' }, { year: 1953, label: '-1' },
+    { year: 1986, label: '0'  }, { year: 2019, label: '+1' }, { year: 2052, label: '+2' }
+  ],
+  nodes: [
+    { world: 'adam', year: 1921, label: 'Portal' },
+    { world: 'eva', year: 2053, label: 'Portal' }
+  ],
+  markers: [
+    { world: 'adam', year: 2019, label: 'Jonas discovers wormhole', id: 'jonas-discovers-wormhole', color: '#378ADD' },
+    { world: 'adam', year: 1904, label: 'Hanno is born',            id: 'hanno-is-born',            color: '#378ADD' }
+  ],
+  branches: [],
+  causalLinks: [],
+  characters: [],
+  travels: []
+};
+
+document.getElementById('btn-load-dark').addEventListener('click', () => {
+  loadFromJson(JSON.stringify(DARK_STUB_SPEC));
+  flash('Dark spec loaded');
+});
+
+// ====================================================================
+// SECTION 7: Timelines tab
+// ====================================================================
+
+document.getElementById('world-row').addEventListener('focus', function() {
+  if (this.value === '') {
+    const maxRow = spec.worlds.reduce((m, w) => Math.max(m, w.row), -1);
+    this.value = maxRow + 1;
+  }
+});
+
+document.getElementById('world-diverge-from-world').addEventListener('change', function() {
+  document.getElementById('diverge-year-row').style.display = this.value ? 'block' : 'none';
+});
+
+function addWorld() {
+  const id    = document.getElementById('world-id').value.trim();
+  const label = document.getElementById('world-label').value.trim();
+  const color = document.getElementById('world-color').value;
+  const row   = parseInt(document.getElementById('world-row').value);
+
+  if (!id)  { showError('World ID is required'); return; }
+  if (editing.worlds === null && spec.worlds.find(w => w.id === id)) { showError(`ID "${id}" already exists`); return; }
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) { showError('ID may only contain letters, numbers, _ and -'); return; }
+  if (isNaN(row) || row < 0) { showError('Row must be a non-negative integer'); return; }
+
+  const world = { id, label: label || id, color, row };
+
+  const weight = parseFloat(document.getElementById('world-weight').value);
+  if (!isNaN(weight)) world.weight = weight;
+
+  const startYear = parseInt(document.getElementById('world-start-year').value);
+  const endYear   = parseInt(document.getElementById('world-end-year').value);
+  if (!isNaN(startYear)) world.startYear = startYear;
+  if (!isNaN(endYear))   world.endYear   = endYear;
+
+  const dfWorld = document.getElementById('world-diverge-from-world').value;
+  const dfYear  = parseInt(document.getElementById('world-diverge-from-year').value);
+  if (dfWorld) {
+    if (isNaN(dfYear)) { showError('Diverge-from year is required'); return; }
+    world.divergeFrom = { world: dfWorld, year: dfYear };
+  }
+
+  if (editing.worlds !== null) {
+    spec.worlds[editing.worlds] = world;
+    document.getElementById('world-id').readOnly = false;
+    _exitEdit('worlds', '+ Add Timeline');
+  } else {
+    spec.worlds.push(world);
+  }
+  liveRender(); syncJsonPanel();
+  updateAllSelectors();
+  refreshWorldsItemList();
+
+  // Clear form
+  ['world-id','world-label','world-weight','world-start-year','world-end-year','world-row'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('world-diverge-from-world').value = '';
+  document.getElementById('world-diverge-from-year').value  = '';
+  document.getElementById('diverge-year-row').style.display = 'none';
+}
+
+function deleteWorld(id) {
+  spec.worlds        = spec.worlds.filter(w => w.id !== id);
+  spec.nodes         = spec.nodes.filter(n => n.world !== id);
+  spec.markers       = spec.markers.filter(m => m.world !== id);
+  spec.wormholes     = spec.wormholes.filter(wh => wh.world !== id);
+  spec.segments      = spec.segments.filter(s => s.world !== id);
+  spec.welds         = spec.welds.filter(w => w.from.world !== id && w.to.world !== id);
+  spec.branches      = spec.branches.filter(b => b.fromWorld !== id && b.newWorld !== id);
+  spec.causalLinks   = (spec.causalLinks || []).filter(lnk => {
+    const fr = resolveEventRef(spec, lnk.from);
+    const tr = resolveEventRef(spec, lnk.to);
+    return fr?.world !== id && tr?.world !== id;
+  });
+  spec.intersections = spec.intersections
+    .map(i => ({ ...i, worlds: i.worlds.filter(w => w !== id) }))
+    .filter(i => i.worlds.length >= 2);
+  liveRender(); syncJsonPanel();
+  updateAllSelectors();
+  refreshAllItemLists();
+}
+
+function refreshWorldsItemList() {
+  const list = document.getElementById('worlds-item-list');
+  if (!list) return;
+  list.innerHTML = spec.worlds.length === 0
+    ? '<div class="item-empty">No timelines yet</div>'
+    : spec.worlds.map(w => `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-swatch" style="background:${w.color}"></span>
+            <span class="item-label">${escapeXml(w.label)}</span>
+            <span class="item-meta">row ${w.row}</span>
+          </div>
+          <button class="btn-edit" onclick="editWorld('${w.id.replace(/'/g,"\\'")}')">✎</button>
+          <button class="btn-delete" onclick="deleteWorld('${w.id.replace(/'/g,"\\'")}')">×</button>
+        </div>`).join('');
+}
+
+// ====================================================================
+// SECTION 8: Nodes tab
+// ====================================================================
+
+function addNode() {
+  const world = spec.worlds?.[0]?.id || '';
+  const year  = spec.yearRange?.[0] || 1900;
+  if (!spec.nodes) spec.nodes = [];
+  const node = { world, year };
+  spec.nodes.push(node);
+  liveRender(); syncJsonPanel(); refreshNodesItemList(); updateEventSelectors();
+  const ni = spec.nodes.length - 1;
+  const frame = document.querySelector('.diagram-frame');
+  const r = frame.getBoundingClientRect();
+  showEditCard('node', ni, r.left + r.width / 2, r.top + r.height / 3);
+}
+
+function deleteNode(idx) {
+  hideEditCard();
+  spec.nodes.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshNodesItemList(); updateEventSelectors();
+}
+
+function editNode(idx) {
+  const frame = document.querySelector('.diagram-frame');
+  const r = frame.getBoundingClientRect();
+  showEditCard('node', idx, r.left + r.width / 2, r.top + r.height / 3);
+}
+
+function cancelEditNodes() { /* no-op — node editing now uses the canvas card */ }
+
+function refreshNodesItemList() {
+  const list = document.getElementById('nodes-item-list');
+  if (!list) return;
+  list.innerHTML = !spec.nodes?.length
+    ? '<div class="item-empty">No nodes yet — click "+ Add Node"</div>'
+    : spec.nodes.map((n, i) => {
+        const cat = n.category ? CATEGORIES.find(c => c.id === n.category) : null;
+        const icon = cat ? cat.icon + ' ' : '';
+        const dotColor = cat ? cat.color : '#EF9F27';
+        return `<div class="item-row" style="cursor:pointer" onclick="editNode(${i})">
+          <div class="item-info">
+            <span class="item-swatch" style="background:${dotColor}"></span>
+            <span class="item-label">${icon}${escapeXml(n.world)} / ${n.year}</span>
+            ${n.label ? `<span class="item-meta">${escapeXml(n.label)}</span>` : ''}
+          </div>
+          <button class="btn-delete" onclick="event.stopPropagation();deleteNode(${i})">×</button>
+        </div>`;
+      }).join('');
+}
+
+// ====================================================================
+// SECTION 9: Markers tab
+// ====================================================================
+
+function addMarker() {
+  const world = spec.worlds?.[0]?.id || '';
+  const year  = spec.yearRange?.[0] || 1900;
+  const existingIds = new Set([
+    ...(spec.markers || []).map(m => m.id),
+    ...(spec.nodes   || []).map(n => n.id)
+  ].filter(Boolean));
+  const id = genUniqueMarkerId('event', existingIds);
+  if (!spec.markers) spec.markers = [];
+  spec.markers.push({ world, year, label: '', id });
+  liveRender(); syncJsonPanel(); updateEventSelectors();
+  refreshMarkersItemList();
+  const mi = spec.markers.length - 1;
+  const frame = document.querySelector('.diagram-frame');
+  const r = frame.getBoundingClientRect();
+  showEditCard('marker', mi, r.left + r.width / 2, r.top + r.height / 3);
+}
+
+function deleteMarker(idx) {
+  hideEditCard();
+  spec.markers.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshMarkersItemList(); updateEventSelectors();
+}
+
+function editMarker(idx) {
+  const frame = document.querySelector('.diagram-frame');
+  const r = frame.getBoundingClientRect();
+  showEditCard('marker', idx, r.left + r.width / 2, r.top + r.height / 3);
+}
+
+function cancelEditMarkers() { /* no-op — marker editing now uses the canvas card */ }
+
+function refreshMarkersItemList() {
+  const list = document.getElementById('markers-item-list');
+  if (!list) return;
+  if (!spec.markers?.length) { list.innerHTML = '<div class="item-empty">No markers yet — click "+ Add Marker"</div>'; return; }
+  list.innerHTML = spec.markers.map((m, i) => {
+    const cat = m.category ? CATEGORIES.find(c => c.id === m.category) : null;
+    const icon = cat ? cat.icon + ' ' : '';
+    const swatchColor = cat ? cat.color : (m.color || '#aaa');
+    return `<div class="item-row" style="cursor:pointer" onclick="editMarker(${i})">
+      <div class="item-info">
+        <span class="item-swatch" style="background:${swatchColor}"></span>
+        <span class="item-label">${icon}${escapeXml(m.world)} / ${m.year}</span>
+        <span class="item-meta">${escapeXml(m.label)}</span>
+      </div>
+      <button class="btn-delete" onclick="event.stopPropagation();deleteMarker(${i})">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ====================================================================
+// SECTION 9b: Causal Links management
+// ====================================================================
+
+function cancelLinkDraw() {
+  linkDrawMode = null;
+  linkSource   = null;
+  linkDest     = null;
+  linkEditIdx  = null;
+  document.getElementById('canvas-column').style.cursor = '';
+  const ol = container.querySelector('#link-draw-ol');
+  if (ol) ol.style.display = 'none';
+  const ring = container.querySelector('#link-source-ring');
+  if (ring) ring.remove();
+  updateLinkDrawStatus();
+}
+
+function commitLinkDraw() { /* no-op — confirm step removed; second bead click saves immediately */ }
+
+function commitLinkManual() { /* no-op — link manual form removed; use canvas draw + edit card */ }
+
+function deleteLink(idx) {
+  if (!spec.causalLinks) return;
+  hideEditCard();
+  spec.causalLinks.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshLinksItemList();
+}
+
+function editLink(idx) {
+  const frame = document.querySelector('.diagram-frame');
+  const r = frame.getBoundingClientRect();
+  showEditCard('link', idx, r.left + r.width / 2, r.top + r.height / 3);
+}
+
+function highlightLinkArc(idx) {
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+  // Dim all link arcs
+  svg.querySelectorAll('[data-link-vis]').forEach(el => el.setAttribute('opacity', '0.35'));
+  // Highlight selected
+  const arc = svg.querySelector(`[data-link-vis="${idx}"]`);
+  if (arc) arc.setAttribute('opacity', '1');
+}
+
+function updateLinkDrawStatus() {
+  const statusEl = document.getElementById('link-draw-status');
+  const hintEl   = document.getElementById('link-draw-hint');
+  if (!statusEl || !hintEl) return;
+
+  if (linkDrawMode === null) {
+    statusEl.style.display = 'none';
+    return;
+  }
+
+  statusEl.style.display = '';
+  const srcLabel = escapeXml(linkSource?.label || '?');
+  hintEl.innerHTML = `<span>Source: <strong style="color:var(--amber)">${srcLabel}</strong> → click destination bead</span>
+    <button class="btn-secondary" onclick="cancelLinkDraw()" style="padding:2px 6px;font-size:9px;margin-left:6px">Cancel</button>`;
+}
+
+function refreshLinkSelectors() {
+  // No-op: link-from-event and link-to-event selects were removed with the manual form
+}
+
+// ====================================================================
+// SECTION 9c: Canvas edit card — shared popover for markers / nodes / links
+// ====================================================================
+
+function _cecWorldOptions(current) {
+  return (spec.worlds || []).map(w =>
+    `<option value="${escapeXml(w.id)}"${w.id === current ? ' selected' : ''}>${escapeXml(w.label || w.id)}</option>`
+  ).join('');
+}
+
+function _cecCategoryOptions(current) {
+  return `<option value="">— none —</option>` +
+    CATEGORIES.map(c =>
+      `<option value="${c.id}"${c.id === current ? ' selected' : ''}>${c.icon}  ${c.name}</option>`
+    ).join('');
+}
+
+function positionCard(card, screenX, screenY) {
+  const frame = document.querySelector('.diagram-frame');
+  const frameRect = frame.getBoundingClientRect();
+  const W = 290;
+  const H = card.offsetHeight || 300;
+  let left = screenX - frameRect.left + 14;
+  let top  = screenY - frameRect.top  - 30;
+  left = Math.max(8, Math.min(left, frameRect.width  - W - 8));
+  top  = Math.max(8, Math.min(top,  frameRect.height - H - 8));
+  card.style.left = left + 'px';
+  card.style.top  = top  + 'px';
+}
+
+function showEditCard(type, idx, screenX, screenY) {
+  _popover = { type, idx };
+  const card  = document.getElementById('canvas-edit-card');
+  const body  = document.getElementById('cec-body');
+  const title = document.getElementById('cec-title');
+
+  if (type === 'marker') {
+    const m = spec.markers[idx];
+    if (!m) { _popover = null; return; }
+    title.textContent = 'Marker';
+    body.innerHTML = `
+      <div class="cec-field">
+        <div class="cec-label">Label</div>
+        <input class="cec-input" id="cec-label" type="text" value="${escapeXml(m.label || '')}">
+      </div>
+      <div class="cec-row">
+        <div class="cec-field">
+          <div class="cec-label">Timeline</div>
+          <select class="cec-select" id="cec-world">${_cecWorldOptions(m.world)}</select>
+        </div>
+        <div class="cec-field">
+          <div class="cec-label">Year</div>
+          <input class="cec-input" id="cec-year" type="number" value="${m.year ?? ''}">
+        </div>
+      </div>
+      <div class="cec-row">
+        <div class="cec-field">
+          <div class="cec-label">Category</div>
+          <select class="cec-select" id="cec-category">${_cecCategoryOptions(m.category)}</select>
+        </div>
+        <div class="cec-field">
+          <div class="cec-label">Color</div>
+          <input class="cec-input" id="cec-color" type="color" value="${m.color || '#C8A951'}" style="padding:2px 4px;height:34px;cursor:pointer">
+        </div>
+      </div>
+      <div class="cec-field">
+        <div class="cec-label">Event ID</div>
+        <input class="cec-input" id="cec-id" type="text" value="${escapeXml(m.id || '')}">
+      </div>`;
+    document.getElementById('cec-label').addEventListener('input', function() {
+      const idEl = document.getElementById('cec-id');
+      if (!idEl._edited) idEl.value = slugifyId(this.value);
+    });
+    document.getElementById('cec-id').addEventListener('input', function() {
+      this._edited = true;
+    });
+
+  } else if (type === 'node') {
+    const n = spec.nodes[idx];
+    if (!n) { _popover = null; return; }
+    title.textContent = 'Node';
+    body.innerHTML = `
+      <div class="cec-field">
+        <div class="cec-label">Label</div>
+        <input class="cec-input" id="cec-label" type="text" value="${escapeXml(n.label || '')}">
+      </div>
+      <div class="cec-row">
+        <div class="cec-field">
+          <div class="cec-label">Timeline</div>
+          <select class="cec-select" id="cec-world">${_cecWorldOptions(n.world)}</select>
+        </div>
+        <div class="cec-field">
+          <div class="cec-label">Year</div>
+          <input class="cec-input" id="cec-year" type="number" value="${n.year ?? ''}">
+        </div>
+      </div>
+      <div class="cec-row">
+        <div class="cec-field">
+          <div class="cec-label">Category</div>
+          <select class="cec-select" id="cec-category">${_cecCategoryOptions(n.category)}</select>
+        </div>
+        <div class="cec-field">
+          <div class="cec-label">Color</div>
+          <input class="cec-input" id="cec-color" type="color" value="${n.color || '#C8A951'}" style="padding:2px 4px;height:34px;cursor:pointer">
+        </div>
+      </div>
+      <div class="cec-field">
+        <div class="cec-label">Event ID</div>
+        <input class="cec-input" id="cec-id" type="text" value="${escapeXml(n.id || '')}">
+      </div>`;
+
+  } else if (type === 'link') {
+    const lnk = spec.causalLinks?.[idx];
+    if (!lnk) { _popover = null; return; }
+    const fromRef = resolveEventRef(spec, lnk.from);
+    const toRef   = resolveEventRef(spec, lnk.to);
+    const fromLabel = fromRef?.label || lnk.from.eventId || `${lnk.from.world || ''}/${lnk.from.year ?? ''}`;
+    const toLabel   = toRef?.label   || lnk.to.eventId   || `${lnk.to.world   || ''}/${lnk.to.year   ?? ''}`;
+    title.textContent = 'Causal Link';
+    body.innerHTML = `
+      <div style="font-size:11px;color:var(--text-muted);padding:2px 0 2px;line-height:1.4">
+        <strong style="color:var(--text-primary)">${escapeXml(fromLabel)}</strong>
+        <span style="color:var(--amber)"> → </span>
+        <strong style="color:var(--text-primary)">${escapeXml(toLabel)}</strong>
+      </div>
+      <div class="cec-field">
+        <div class="cec-label">If…</div>
+        <textarea class="cec-textarea" id="cec-criteria" rows="3"
+          placeholder="If the party investigates…">${escapeXml(lnk.criteria || '')}</textarea>
+      </div>
+      <div class="cec-field">
+        <div class="cec-label">Notes</div>
+        <input class="cec-input" id="cec-notes" type="text" value="${escapeXml(lnk.notes || '')}"
+          placeholder="DM only…">
+      </div>`;
+    // Highlight selected arc, dim others
+    document.querySelectorAll('[data-link-vis]').forEach(el => el.setAttribute('opacity', '0.38'));
+    const arc = container.querySelector(`[data-link-vis="${idx}"]`);
+    if (arc) arc.setAttribute('opacity', '1');
+  }
+
+  positionCard(card, screenX, screenY);
+  card.classList.add('visible');
+  setTimeout(() => {
+    const first = body.querySelector('textarea, input[type="text"], input:not([type])');
+    if (first) first.focus();
+  }, 40);
+}
+
+function hideEditCard() {
+  if (!_popover) return;
+  _popover = null;
+  document.getElementById('canvas-edit-card').classList.remove('visible');
+  document.querySelectorAll('[data-link-vis]').forEach(el => el.setAttribute('opacity', '0.65'));
+}
+
+function saveCard() {
+  if (!_popover) return;
+  const { type, idx } = _popover;
+
+  if (type === 'marker') {
+    const m = spec.markers[idx];
+    if (!m) { hideEditCard(); return; }
+    const newLabel = document.getElementById('cec-label').value.trim();
+    const newId    = document.getElementById('cec-id').value.trim();
+    m.label    = newLabel;
+    m.world    = document.getElementById('cec-world').value;
+    m.year     = parseInt(document.getElementById('cec-year').value) || m.year;
+    const cat  = document.getElementById('cec-category').value;
+    if (cat) m.category = cat; else delete m.category;
+    const col  = document.getElementById('cec-color').value;
+    if (col && col.toLowerCase() !== '#c8a951') m.color = col; else delete m.color;
+    if (newId && newId !== m.id) {
+      const oldId = m.id;
+      m.id = newId;
+      (spec.causalLinks || []).forEach(lnk => {
+        if (lnk.from.eventId === oldId) lnk.from.eventId = newId;
+        if (lnk.to.eventId   === oldId) lnk.to.eventId   = newId;
+      });
+    } else if (!newId) {
+      m.id = genUniqueMarkerId(slugifyId(newLabel || 'event'), new Set(
+        (spec.markers || []).filter((_, i) => i !== idx).map(x => x.id).filter(Boolean)
+      ));
+    }
+
+  } else if (type === 'node') {
+    const n = spec.nodes[idx];
+    if (!n) { hideEditCard(); return; }
+    const newId = document.getElementById('cec-id').value.trim();
+    n.label = document.getElementById('cec-label').value.trim() || undefined;
+    n.world = document.getElementById('cec-world').value;
+    n.year  = parseInt(document.getElementById('cec-year').value) || n.year;
+    const cat = document.getElementById('cec-category').value;
+    if (cat) n.category = cat; else delete n.category;
+    const col = document.getElementById('cec-color').value;
+    if (col && col.toLowerCase() !== '#c8a951') n.color = col; else delete n.color;
+    if (newId && newId !== n.id) {
+      const oldId = n.id;
+      n.id = newId;
+      (spec.causalLinks || []).forEach(lnk => {
+        if (lnk.from.eventId === oldId) lnk.from.eventId = newId;
+        if (lnk.to.eventId   === oldId) lnk.to.eventId   = newId;
+      });
+    } else if (newId) {
+      n.id = newId;
+    } else {
+      delete n.id;
+    }
+
+  } else if (type === 'link') {
+    const lnk = spec.causalLinks?.[idx];
+    if (!lnk) { hideEditCard(); return; }
+    const criteria = document.getElementById('cec-criteria').value.trim();
+    const notes    = document.getElementById('cec-notes').value.trim();
+    if (criteria) lnk.criteria = criteria; else delete lnk.criteria;
+    if (notes)    lnk.notes    = notes;    else delete lnk.notes;
+  }
+
+  hideEditCard();
+  liveRender(); syncJsonPanel();
+  refreshMarkersItemList();
+  refreshNodesItemList();
+  refreshLinksItemList();
+  updateEventSelectors();
+}
+
+function deleteFromCard() {
+  if (!_popover) return;
+  const { type, idx } = _popover;
+  hideEditCard();
+  if (type === 'marker') {
+    deleteMarker(idx);
+  } else if (type === 'node') {
+    deleteNode(idx);
+  } else if (type === 'link') {
+    deleteLink(idx);
+  }
+}
+
+function refreshLinksItemList() {
+  const list = document.getElementById('links-item-list');
+  if (!list) return;
+  if (!(spec.causalLinks?.length)) {
+    list.innerHTML = '<div class="item-empty">No causal links yet.<br>Switch to Links tab and click two beads.</div>';
+    return;
+  }
+
+  // Group by source event
+  const groups = new Map();
+  spec.causalLinks.forEach((lnk, li) => {
+    const fromRef = resolveEventRef(spec, lnk.from);
+    const key = lnk.from.eventId || `${lnk.from.world}:${lnk.from.year}`;
+    const srcLabel = fromRef?.label || lnk.from.eventId || key;
+    if (!groups.has(key)) groups.set(key, { srcLabel, links: [] });
+    groups.get(key).links.push({ li, lnk });
+  });
+
+  let html = '';
+  for (const { srcLabel, links } of groups.values()) {
+    html += `<div style="padding:7px 0 3px;font-size:11px;font-weight:600;color:var(--amber);border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:2px">${escapeXml(srcLabel)}</div>`;
+    for (const { li, lnk } of links) {
+      const toRef = resolveEventRef(spec, lnk.to);
+      const toLabel = toRef?.label || lnk.to.eventId || `${lnk.to.world || ''}/${lnk.to.year ?? ''}`;
+      const criteria = lnk.criteria
+        ? `<span style="color:var(--text-primary)">${escapeXml(lnk.criteria)}</span>`
+        : `<span style="color:var(--text-muted);font-style:italic">no criteria</span>`;
+      html += `<div class="item-row" style="cursor:pointer;flex-direction:column;align-items:stretch;gap:2px;padding:5px 6px;margin-bottom:2px"
+                   onclick="editLink(${li})">
+        <div style="font-size:11px">${criteria}</div>
+        <div style="font-size:10px;color:rgba(221,219,211,0.45)">→ ${escapeXml(toLabel)}</div>
+        <button class="btn-delete" onclick="event.stopPropagation();deleteLink(${li})" style="align-self:flex-end;margin-top:2px">×</button>
+      </div>`;
+    }
+  }
+  list.innerHTML = html;
+}
+
+function updateEventSelectors() {
+  const events = [];
+  (spec.markers || []).forEach(m => {
+    if (m.id) events.push({ id: m.id, label: `${m.label} (${m.world} / ${m.year})`, type: 'marker' });
+  });
+  (spec.nodes || []).forEach(n => {
+    if (n.id) events.push({ id: n.id, label: `${n.id}${n.label ? ' — ' + n.label : ''} (${n.world} / ${n.year})`, type: 'node' });
+  });
+  document.querySelectorAll('[data-event-selector]').forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— freeform (set timeline + year below) —</option>';
+    events.forEach(ev => {
+      const opt = document.createElement('option');
+      opt.value = ev.id;
+      opt.textContent = `${ev.type === 'marker' ? '◆' : '●'} ${ev.label}`;
+      sel.appendChild(opt);
+    });
+    sel.value = events.find(e => e.id === cur) ? cur : '';
+  });
+  refreshLinkSelectors();
+}
+
+// ====================================================================
+// SECTION 10: Welds tab
+// ====================================================================
+
+function addWeld() {
+  const fw = document.getElementById('weld-from-world').value;
+  const fy = parseInt(document.getElementById('weld-from-year').value);
+  const tw = document.getElementById('weld-to-world').value;
+  const ty = parseInt(document.getElementById('weld-to-year').value);
+  const label = document.getElementById('weld-label').value.trim();
+
+  if (!fw || !tw)       { showError('Both timelines are required'); return; }
+  if (isNaN(fy) || isNaN(ty)) { showError('Both years are required'); return; }
+
+  const weld = { from: { world: fw, year: fy }, to: { world: tw, year: ty } };
+  if (label) weld.label = label;
+  if (editing.welds !== null) {
+    spec.welds[editing.welds] = weld;
+    _exitEdit('welds', '+ Add Connection');
+  } else {
+    spec.welds.push(weld);
+  }
+  liveRender(); syncJsonPanel(); refreshWeldsItemList();
+  document.getElementById('weld-from-year').value = '';
+  document.getElementById('weld-to-year').value   = '';
+  document.getElementById('weld-label').value     = '';
+}
+
+function deleteWeld(idx) {
+  spec.welds.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshWeldsItemList();
+}
+
+function refreshWeldsItemList() {
+  const list = document.getElementById('welds-item-list');
+  if (!list) return;
+  list.innerHTML = spec.welds.length === 0
+    ? '<div class="item-empty">No connections yet</div>'
+    : spec.welds.map((w, i) => `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-label">${w.from.world}:${w.from.year} → ${w.to.world}:${w.to.year}</span>
+            ${w.label ? `<span class="item-meta">${escapeXml(w.label)}</span>` : ''}
+          </div>
+          <button class="btn-edit" onclick="editWeld(${i})">✎</button>
+          <button class="btn-delete" onclick="deleteWeld(${i})">×</button>
+        </div>`).join('');
+}
+
+// ====================================================================
+// SECTION 11: Intersections tab
+// ====================================================================
+
+function buildIntersectionCheckboxes() {
+  const box = document.getElementById('intersection-worlds-checkboxes');
+  if (!box) return;
+  if (spec.worlds.length === 0) {
+    box.innerHTML = '<span class="item-empty">Add timelines first</span>';
+    updateTerminusCheckboxes();
+    return;
+  }
+  const prevChecked = Array.from(box.querySelectorAll('input:checked')).map(cb => cb.value);
+  box.innerHTML = spec.worlds.map(w => `
+    <label class="checkbox-label">
+      <input type="checkbox" name="inter-world" value="${w.id}"${prevChecked.includes(w.id) ? ' checked' : ''} onchange="updateTerminusCheckboxes()">
+      ${escapeXml(w.label)}
+    </label>`).join('');
+  updateTerminusCheckboxes();
+}
+
+function updateTerminusCheckboxes() {
+  const terminusBox = document.getElementById('intersection-terminus-checkboxes');
+  if (!terminusBox) return;
+  const checked = Array.from(document.querySelectorAll('input[name="inter-world"]:checked')).map(cb => cb.value);
+  const prevTerminus = Array.from(terminusBox.querySelectorAll('input:checked')).map(cb => cb.value);
+  if (checked.length === 0) {
+    terminusBox.innerHTML = '<span class="item-empty">Select timelines above first</span>';
+    return;
+  }
+  terminusBox.innerHTML = checked.map(wid => {
+    const world = spec.worlds.find(w => w.id === wid);
+    const label = world ? escapeXml(world.label) : wid;
+    return `<label class="checkbox-label">
+      <input type="checkbox" name="inter-terminus" value="${wid}"${prevTerminus.includes(wid) ? ' checked' : ''}>
+      ${label}
+    </label>`;
+  }).join('');
+}
+
+function addIntersection() {
+  const year     = parseInt(document.getElementById('intersection-year').value);
+  const label    = document.getElementById('intersection-label').value.trim();
+  const checked  = Array.from(document.querySelectorAll('input[name="inter-world"]:checked')).map(cb => cb.value);
+  const terminus = Array.from(document.querySelectorAll('input[name="inter-terminus"]:checked')).map(cb => cb.value);
+
+  if (isNaN(year))        { showError('Year is required'); return; }
+  if (checked.length < 2) { showError('Select at least 2 timelines'); return; }
+
+  const inter = { year, worlds: checked };
+  if (label) inter.label = label;
+
+  if (editing.intersections !== null) {
+    // Clear old terminus endYears for worlds that were in the old intersection
+    const old = spec.intersections[editing.intersections];
+    old.worlds.forEach(wid => {
+      const world = spec.worlds.find(w => w.id === wid);
+      if (world && world.endYear === old.year) delete world.endYear;
+    });
+    spec.intersections[editing.intersections] = inter;
+    _exitEdit('intersections', '+ Add Intersection');
+  } else {
+    spec.intersections.push(inter);
+  }
+
+  // Set endYear on worlds that terminate here
+  terminus.forEach(wid => {
+    const world = spec.worlds.find(w => w.id === wid);
+    if (world) world.endYear = year;
+  });
+
+  liveRender(); syncJsonPanel(); refreshIntersectionsItemList(); refreshWorldsItemList();
+  document.getElementById('intersection-year').value  = '';
+  document.getElementById('intersection-label').value = '';
+  document.querySelectorAll('input[name="inter-world"]').forEach(cb => { cb.checked = false; });
+  updateTerminusCheckboxes();
+}
+
+function deleteIntersection(idx) {
+  spec.intersections.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshIntersectionsItemList();
+}
+
+function refreshIntersectionsItemList() {
+  const list = document.getElementById('intersections-item-list');
+  if (!list) return;
+  list.innerHTML = spec.intersections.length === 0
+    ? '<div class="item-empty">No intersections yet</div>'
+    : spec.intersections.map((inter, i) => `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-label">${inter.year}</span>
+            <span class="item-meta">${inter.worlds.join(', ')}</span>
+          </div>
+          <button class="btn-edit" onclick="editIntersection(${i})">✎</button>
+          <button class="btn-delete" onclick="deleteIntersection(${i})">×</button>
+        </div>`).join('');
+}
+
+// ====================================================================
+// SECTION 12: Branches tab
+// ====================================================================
+
+function addBranch() {
+  const fromWorld = document.getElementById('branch-from-world').value;
+  const fromYear  = parseInt(document.getElementById('branch-from-year').value);
+  const newWorld  = document.getElementById('branch-new-world').value;
+  const toYear    = parseInt(document.getElementById('branch-to-year').value);
+
+  if (!fromWorld || !newWorld)      { showError('Both timelines are required'); return; }
+  if (isNaN(fromYear) || isNaN(toYear)) { showError('Both years are required'); return; }
+
+  const branch = { fromWorld, fromYear, newWorld, toYear };
+  if (editing.branches !== null) {
+    spec.branches[editing.branches] = branch;
+    _exitEdit('branches', '+ Add Branch');
+  } else {
+    spec.branches.push(branch);
+  }
+  liveRender(); syncJsonPanel(); refreshBranchesItemList();
+  document.getElementById('branch-from-year').value = '';
+  document.getElementById('branch-to-year').value   = '';
+}
+
+function deleteBranch(idx) {
+  spec.branches.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshBranchesItemList();
+}
+
+function refreshBranchesItemList() {
+  const list = document.getElementById('branches-item-list');
+  if (!list) return;
+  list.innerHTML = spec.branches.length === 0
+    ? '<div class="item-empty">No branches yet</div>'
+    : spec.branches.map((b, i) => `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-label">${b.fromWorld}:${b.fromYear} → ${b.newWorld}:${b.toYear ?? b.fromYear}</span>
+          </div>
+          <button class="btn-edit" onclick="editBranch(${i})">✎</button>
+          <button class="btn-delete" onclick="deleteBranch(${i})">×</button>
+        </div>`).join('');
+}
+
+// ====================================================================
+// SECTION 13: Wormholes tab
+// ====================================================================
+
+function addJumpYearInput() {
+  const c     = document.getElementById('wormhole-jumps-container');
+  const input = document.createElement('input');
+  input.type        = 'number';
+  input.className   = 'jump-year-input form-input';
+  input.placeholder = 'Jump year';
+  c.appendChild(input);
+}
+
+function addWormhole() {
+  const world   = document.getElementById('wormhole-world').value;
+  const anchor  = parseInt(document.getElementById('wormhole-anchor').value);
+  const sideEl  = document.querySelector('input[name="wormhole-side"]:checked');
+  const side    = sideEl ? sideEl.value : 'below';
+  const jumps   = Array.from(document.querySelectorAll('.jump-year-input'))
+    .map(i => parseInt(i.value)).filter(y => !isNaN(y));
+  const winOpen  = document.getElementById('wormhole-window-open').value.trim();
+  const winClose = document.getElementById('wormhole-window-close').value.trim();
+
+  if (!world)       { showError('Select a timeline'); return; }
+  if (isNaN(anchor)) { showError('Anchor year is required'); return; }
+  if (jumps.length === 0) { showError('At least one jump year is required'); return; }
+
+  const wormhole = { world, anchor, jumps, side };
+  if (winOpen || winClose) {
+    wormhole.window = {};
+    if (winOpen)  wormhole.window.open  = winOpen;
+    if (winClose) wormhole.window.close = winClose;
+  }
+  if (editing.wormholes !== null) {
+    spec.wormholes[editing.wormholes] = wormhole;
+    _exitEdit('wormholes', '+ Add Wormhole');
+  } else {
+    spec.wormholes.push(wormhole);
+  }
+  liveRender(); syncJsonPanel(); refreshWormholesItemList();
+
+  document.getElementById('wormhole-anchor').value      = '';
+  document.getElementById('wormhole-window-open').value  = '';
+  document.getElementById('wormhole-window-close').value = '';
+  const jc = document.getElementById('wormhole-jumps-container');
+  jc.innerHTML = '<input type="number" class="jump-year-input form-input" placeholder="Jump year">';
+}
+
+function deleteWormhole(idx) {
+  spec.wormholes.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshWormholesItemList();
+}
+
+function refreshWormholesItemList() {
+  const list = document.getElementById('wormholes-item-list');
+  if (!list) return;
+  list.innerHTML = spec.wormholes.length === 0
+    ? '<div class="item-empty">No wormholes yet</div>'
+    : spec.wormholes.map((wh, i) => `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-label">${wh.world} / ${wh.anchor}</span>
+            <span class="item-meta">→ [${wh.jumps.join(', ')}]</span>
+          </div>
+          <button class="btn-edit" onclick="editWormhole(${i})">✎</button>
+          <button class="btn-delete" onclick="deleteWormhole(${i})">×</button>
+        </div>`).join('');
+}
+
+// ====================================================================
+// SECTION 14: Cycles tab
+// ====================================================================
+
+function addCycle() {
+  const year  = parseInt(document.getElementById('cycle-year').value);
+  const label = document.getElementById('cycle-label').value.trim();
+  const color = document.getElementById('cycle-color').value;
+
+  if (isNaN(year)) { showError('Year is required'); return; }
+
+  const cycle = { year };
+  if (label) cycle.label = label;
+  if (color && color.toLowerCase() !== '#c8a951') cycle.color = color;
+  if (editing.cycles !== null) {
+    spec.cycles[editing.cycles] = cycle;
+    _exitEdit('cycles', '+ Add Cycle');
+  } else {
+    spec.cycles.push(cycle);
+  }
+  liveRender(); syncJsonPanel(); refreshCyclesItemList();
+  document.getElementById('cycle-year').value  = '';
+  document.getElementById('cycle-label').value = '';
+  document.getElementById('cycle-color').value = '#C8A951';
+}
+
+function deleteCycle(idx) {
+  spec.cycles.splice(idx, 1);
+  liveRender(); syncJsonPanel(); refreshCyclesItemList();
+}
+
+function refreshCyclesItemList() {
+  const list = document.getElementById('cycles-item-list');
+  if (!list) return;
+  list.innerHTML = spec.cycles.length === 0
+    ? '<div class="item-empty">No cycles yet</div>'
+    : spec.cycles.map((c, i) => `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-label">${c.year}</span>
+            ${c.label ? `<span class="item-meta">${escapeXml(c.label)}</span>` : ''}
+          </div>
+          <button class="btn-edit" onclick="editCycle(${i})">✎</button>
+          <button class="btn-delete" onclick="deleteCycle(${i})">×</button>
+        </div>`).join('');
+}
+
+// ====================================================================
+// SECTION 15: Canvas click-to-place
+// ====================================================================
+
+let placeMode          = null;  // { yearInputId, worldSelectId }
+let hoverState         = null;  // { world, year } or null
+let activeTab          = 'setup';
+let linkDrawMode       = null;  // null | 'destination'
+let linkSource         = null;  // { ref, x, y, label } — source bead
+let linkDest           = null;  // { ref, x, y } — destination bead
+let linkEditIdx        = null;  // index into spec.causalLinks being edited
+let _popover           = null;  // { type: 'marker'|'node'|'link', idx } or null
+
+function activatePlaceMode(yearInputId, worldSelectId) {
+  if (placeMode) {
+    // Cancel if same button clicked again
+    placeMode = null;
+    document.getElementById('canvas-column').style.cursor = '';
+    document.querySelectorAll('.btn-place').forEach(b => b.classList.remove('active'));
+    return;
+  }
+  placeMode = { yearInputId, worldSelectId };
+  document.getElementById('canvas-column').style.cursor = 'crosshair';
+  const btnEl = document.getElementById(worldSelectId === 'node-world' ? 'btn-place-node' : 'btn-place-marker');
+  if (btnEl) btnEl.classList.add('active');
+}
+
+document.getElementById('canvas-column').addEventListener('click', function(e) {
+  if (!placeMode) return;
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+
+  const rect = svg.getBoundingClientRect();
+  const vb   = svg.getAttribute('viewBox').split(' ').map(Number);
+  const svgX = ((e.clientX - rect.left)  / rect.width)  * vb[2];
+  const svgY = ((e.clientY - rect.top)   / rect.height) * vb[3];
+
+  const year = Math.round(
+    spec.yearRange[0] + ((svgX - LEFT_MARGIN) / PLOT_W) * (spec.yearRange[1] - spec.yearRange[0])
+  );
+  const row = Math.round((svgY - TOP_MARGIN) / ROW_HEIGHT);
+  const closestWorld = spec.worlds.reduce((best, w) =>
+    !best || Math.abs(w.row - row) < Math.abs(best.row - row) ? w : best, null);
+
+  const yearInput   = document.getElementById(placeMode.yearInputId);
+  const worldSelect = document.getElementById(placeMode.worldSelectId);
+  if (yearInput)   yearInput.value = year;
+  if (worldSelect && closestWorld) worldSelect.value = closestWorld.id;
+
+  document.querySelectorAll('.btn-place').forEach(b => b.classList.remove('active'));
+  placeMode = null;
+  this.style.cursor = '';
+});
+
+// (place-mode buttons and marker-label auto-fill listener removed with sidebar forms)
+
+// ====================================================================
+// SECTION 15b: SVG hover-to-add-node overlay
+// ====================================================================
+
+function attachHoverOverlay() {
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+
+  // Inject overlay group: [0] vertical line, [1] snap dot
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns, 'g');
+  g.setAttribute('id', 'hover-ol');
+  g.setAttribute('pointer-events', 'none');
+  g.style.display = 'none';
+
+  const line = document.createElementNS(ns, 'line');
+  line.setAttribute('stroke', '#C8A951');
+  line.setAttribute('stroke-width', '0.75');
+  line.setAttribute('stroke-dasharray', '3 4');
+  line.setAttribute('opacity', '0.6');
+
+  const dot = document.createElementNS(ns, 'circle');
+  dot.setAttribute('r', '5');
+  dot.setAttribute('fill', '#C8A951');
+  dot.setAttribute('opacity', '0.85');
+
+  g.appendChild(line);
+  g.appendChild(dot);
+  svg.appendChild(g);
+
+  svg.addEventListener('mousemove', onSvgMouseMove);
+  svg.addEventListener('mouseleave', onSvgMouseLeave);
+}
+
+function onSvgMouseMove(e) {
+  if (placeMode || spec.worlds.length === 0) return;
+  if (activeTab !== 'nodes' && activeTab !== 'markers') {
+    const svg = e.currentTarget;
+    const ol  = svg.querySelector('#hover-ol');
+    if (ol) ol.style.display = 'none';
+    if (linkDrawMode === null) svg.style.cursor = '';
+    hoverState = null;
+    return;
+  }
+  const svg = e.currentTarget;
+  const rect = svg.getBoundingClientRect();
+  const vb   = svg.getAttribute('viewBox').split(' ').map(Number);
+  const svgX = (e.clientX - rect.left) / rect.width  * vb[2];
+  const svgY = (e.clientY - rect.top)  / rect.height * vb[3];
+
+  const rawYear     = spec.yearRange[0] + ((svgX - LEFT_MARGIN) / PLOT_W) * (spec.yearRange[1] - spec.yearRange[0]);
+  const clampedYear = Math.round(Math.max(spec.yearRange[0], Math.min(spec.yearRange[1], rawYear)));
+
+  let nearest = null, nearestDist = Infinity;
+  for (const w of spec.worlds) {
+    const wy   = getWorldYAtYear(spec, w, clampedYear);
+    const dist = Math.abs(svgY - wy);
+    if (dist < nearestDist) { nearestDist = dist; nearest = w; }
+  }
+
+  const ol = svg.querySelector('#hover-ol');
+  if (!ol) return;
+
+  const SNAP_THRESHOLD = 30; // SVG units
+  if (nearest && nearestDist < SNAP_THRESHOLD) {
+    const wx = yearToX(clampedYear, spec.yearRange);
+    const wy = getWorldYAtYear(spec, nearest, clampedYear);
+    ol.children[0].setAttribute('x1', wx); ol.children[0].setAttribute('x2', wx);
+    ol.children[0].setAttribute('y1', 0);  ol.children[0].setAttribute('y2', vb[3]);
+    ol.children[1].setAttribute('cx', wx); ol.children[1].setAttribute('cy', wy);
+    ol.style.display = '';
+    svg.style.cursor = 'crosshair';
+    hoverState = { world: nearest, year: clampedYear };
+  } else {
+    ol.style.display = 'none';
+    svg.style.cursor = '';
+    hoverState = null;
+  }
+}
+
+function onSvgMouseLeave(e) {
+  const svg = e.currentTarget;
+  const ol  = svg.querySelector('#hover-ol');
+  if (ol) ol.style.display = 'none';
+  svg.style.cursor = '';
+  hoverState = null;
+}
+
+// ====================================================================
+// SECTION 15c: Link draw overlay (ghost arc + source ring)
+// ====================================================================
+
+function attachLinkDrawOverlay() {
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  const g  = document.createElementNS(ns, 'g');
+  g.id = 'link-draw-ol';
+  g.setAttribute('pointer-events', 'none');
+  g.style.display = 'none';
+
+  const arc = document.createElementNS(ns, 'path');
+  arc.id = 'link-ghost-arc';
+  arc.setAttribute('fill',           'none');
+  arc.setAttribute('stroke',         '#C8A951');
+  arc.setAttribute('stroke-width',   '1.5');
+  arc.setAttribute('stroke-dasharray', '5 3');
+  arc.setAttribute('opacity',        '0.5');
+
+  const snap = document.createElementNS(ns, 'circle');
+  snap.id = 'link-ghost-snap';
+  snap.setAttribute('r',            '7');
+  snap.setAttribute('fill',         'none');
+  snap.setAttribute('stroke',       '#C8A951');
+  snap.setAttribute('stroke-width', '1.5');
+  snap.setAttribute('opacity',      '0.7');
+  snap.style.display = 'none';
+
+  g.appendChild(arc);
+  g.appendChild(snap);
+  svg.appendChild(g);
+
+  svg.addEventListener('mousemove', onLinkDrawMouseMove);
+}
+
+function onLinkDrawMouseMove(e) {
+  const svg = e.currentTarget;
+  const ol  = svg.querySelector('#link-draw-ol');
+  if (!ol) return;
+
+  if (linkDrawMode !== 'destination' || !linkSource) {
+    ol.style.display = 'none';
+    return;
+  }
+
+  ol.style.display = '';
+  const rect = svg.getBoundingClientRect();
+  const vb   = svg.getAttribute('viewBox').split(' ').map(Number);
+  const svgX = (e.clientX - rect.left) / rect.width  * vb[2];
+  const svgY = (e.clientY - rect.top)  / rect.height * vb[3];
+
+  const SNAP = 20;
+  let nearest = null, nearestDist = Infinity;
+  svg.querySelectorAll('[data-marker-idx],[data-node-idx]').forEach(bead => {
+    const bx   = parseFloat(bead.getAttribute('cx'));
+    const by   = parseFloat(bead.getAttribute('cy'));
+    const dist = Math.hypot(svgX - bx, svgY - by);
+    if (dist < nearestDist) { nearestDist = dist; nearest = bead; }
+  });
+
+  const arc  = ol.querySelector('#link-ghost-arc');
+  const snap = ol.querySelector('#link-ghost-snap');
+  const tx   = (nearest && nearestDist < SNAP) ? parseFloat(nearest.getAttribute('cx')) : svgX;
+  const ty   = (nearest && nearestDist < SNAP) ? parseFloat(nearest.getAttribute('cy')) : svgY;
+  const sx   = linkSource.x, sy = linkSource.y;
+  const arcH = Math.max(22, Math.abs(tx - sx) * 0.18 + Math.abs(ty - sy) * 0.25);
+  const cpX  = (sx + tx) / 2;
+  const cpY  = (sy + ty) / 2 - arcH;
+  arc.setAttribute('d', `M ${sx.toFixed(1)} ${sy.toFixed(1)} Q ${cpX.toFixed(1)} ${cpY.toFixed(1)}, ${tx.toFixed(1)} ${ty.toFixed(1)}`);
+
+  if (nearest && nearestDist < SNAP) {
+    snap.setAttribute('cx', tx); snap.setAttribute('cy', ty);
+    snap.style.display = '';
+  } else {
+    snap.style.display = 'none';
+  }
+  svg.style.cursor = 'crosshair';
+}
+
+function attachLinkSourceRing() {
+  if (!linkSource || linkDrawMode === null) return;
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+  let beadEl = null;
+  if (linkSource.ref.eventId) {
+    const mi = (spec.markers || []).findIndex(m => m.id === linkSource.ref.eventId);
+    if (mi >= 0) beadEl = svg.querySelector(`[data-marker-idx="${mi}"]`);
+    else {
+      const ni = (spec.nodes || []).findIndex(n => n.id === linkSource.ref.eventId);
+      if (ni >= 0) beadEl = svg.querySelector(`[data-node-idx="${ni}"]`);
+    }
+  } else if (linkSource.ref.world && linkSource.ref.year !== undefined) {
+    const mi = (spec.markers || []).findIndex(m => m.world === linkSource.ref.world && m.year === linkSource.ref.year);
+    if (mi >= 0) beadEl = svg.querySelector(`[data-marker-idx="${mi}"]`);
+    else {
+      const ni = (spec.nodes || []).findIndex(n => n.world === linkSource.ref.world && n.year === linkSource.ref.year);
+      if (ni >= 0) beadEl = svg.querySelector(`[data-node-idx="${ni}"]`);
+    }
+  }
+  if (!beadEl) return;
+  // Update stored coords from actual bead position
+  linkSource.x = parseFloat(beadEl.getAttribute('cx'));
+  linkSource.y = parseFloat(beadEl.getAttribute('cy'));
+
+  const ns   = 'http://www.w3.org/2000/svg';
+  const ring = document.createElementNS(ns, 'circle');
+  ring.id = 'link-source-ring';
+  ring.setAttribute('cx', beadEl.getAttribute('cx'));
+  ring.setAttribute('cy', beadEl.getAttribute('cy'));
+  ring.setAttribute('r',  '9');
+  ring.setAttribute('fill', 'none');
+  ring.setAttribute('stroke', '#C8A951');
+  ring.setAttribute('stroke-width', '2');
+  ring.setAttribute('stroke-dasharray', '3 3');
+  ring.setAttribute('opacity', '0.9');
+  ring.setAttribute('pointer-events', 'none');
+  beadEl.parentNode.insertBefore(ring, beadEl.nextSibling);
+}
+
+// ====================================================================
+// SECTION 16: Marker interactivity
+// ====================================================================
+
+function attachMarkerInteractivity() {
+  _activeAnnotId     = null;
+  _activeLinkAnnotId = null;
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+
+  function closeAll() {
+    if (_activeAnnotId) {
+      const el = svg.querySelector(`#${_activeAnnotId}`);
+      if (el) el.setAttribute('display', 'none');
+      _activeAnnotId = null;
+    }
+    if (_activeLinkAnnotId) {
+      const el = svg.querySelector(`#${_activeLinkAnnotId}`);
+      if (el) el.setAttribute('display', 'none');
+      _activeLinkAnnotId = null;
+    }
+  }
+
+  svg.addEventListener('click', (e) => {
+    if (placeMode) return;
+    const markerHit = e.target.closest('[data-marker-idx]');
+    const nodeHit   = e.target.closest('[data-node-idx]');
+    const linkHit   = e.target.closest('[data-link-idx]');
+    const pillHit   = e.target.closest('[data-link-pill-idx]');
+
+    // ── Link draw mode — bead clicks set source then destination ──
+    const wantsLinkDraw = linkDrawMode === 'destination' ||
+                          (activeTab === 'links' && (markerHit || nodeHit) && linkDrawMode === null);
+    if (wantsLinkDraw) {
+      const bead = markerHit || nodeHit;
+      if (!bead) { if (linkDrawMode !== null) return; closeAll(); return; }
+
+      const isMarker = !!markerHit;
+      const idx      = parseInt(bead.dataset[isMarker ? 'markerIdx' : 'nodeIdx']);
+      const obj      = isMarker ? spec.markers[idx] : spec.nodes[idx];
+      if (!obj) return;
+
+      const ref   = obj.id ? { eventId: obj.id } : { world: obj.world, year: obj.year };
+      const svgX  = parseFloat(bead.getAttribute('cx'));
+      const svgY  = parseFloat(bead.getAttribute('cy'));
+      const label = obj.label || obj.id || `${obj.world}/${obj.year}`;
+
+      if (linkDrawMode === null) {
+        // First click — set source, enter destination mode
+        hideEditCard();
+        linkSource   = { ref, x: svgX, y: svgY, label };
+        linkDrawMode = 'destination';
+        liveRender();
+        updateLinkDrawStatus();
+        e.stopPropagation(); return;
+      }
+
+      if (linkDrawMode === 'destination') {
+        const isSelf = (ref.eventId && linkSource.ref.eventId && ref.eventId === linkSource.ref.eventId) ||
+                       (!ref.eventId && !linkSource.ref.eventId &&
+                        ref.world === linkSource.ref.world && ref.year === linkSource.ref.year);
+        if (isSelf) return;
+        // Save immediately, then open edit card
+        if (!spec.causalLinks) spec.causalLinks = [];
+        spec.causalLinks.push({ from: linkSource.ref, to: ref });
+        const newIdx = spec.causalLinks.length - 1;
+        cancelLinkDraw();
+        liveRender(); syncJsonPanel(); refreshLinksItemList();
+        showEditCard('link', newIdx, e.clientX, e.clientY);
+        e.stopPropagation(); return;
+      }
+      return;
+    }
+
+    // ── Hover-click: add node/marker on canvas ──
+    if (!markerHit && !nodeHit && !linkHit && !pillHit && hoverState) {
+      if (activeTab === 'nodes') {
+        const node = { world: hoverState.world.id, year: hoverState.year };
+        if (!spec.nodes) spec.nodes = [];
+        spec.nodes.push(node);
+        const ni = spec.nodes.length - 1;
+        liveRender(); syncJsonPanel(); refreshNodesItemList();
+        showEditCard('node', ni, e.clientX, e.clientY);
+        e.stopPropagation(); return;
+      }
+      if (activeTab === 'markers') {
+        const existingIds = new Set([
+          ...(spec.markers || []).map(m => m.id),
+          ...(spec.nodes   || []).map(n => n.id)
+        ].filter(Boolean));
+        const id = genUniqueMarkerId('event', existingIds);
+        const marker = { world: hoverState.world.id, year: hoverState.year, label: '', id };
+        if (!spec.markers) spec.markers = [];
+        spec.markers.push(marker);
+        const mi = spec.markers.length - 1;
+        liveRender(); syncJsonPanel(); refreshMarkersItemList(); updateEventSelectors();
+        showEditCard('marker', mi, e.clientX, e.clientY);
+        e.stopPropagation(); return;
+      }
+    }
+
+    // ── Click on empty canvas — close card ──
+    if (!markerHit && !nodeHit && !linkHit && !pillHit) {
+      if (_popover) { hideEditCard(); return; }
+      closeAll(); return;
+    }
+
+    // ── Pill click — toggle annotation ──
+    if (pillHit) {
+      const li = parseInt(pillHit.dataset.linkPillIdx);
+      const annotId = `link-annot-${li}`;
+      const wasOpen = _activeLinkAnnotId === annotId;
+      closeAll();
+      if (!wasOpen) {
+        const el = svg.querySelector(`#${annotId}`);
+        if (el) el.setAttribute('display', '');
+        _activeLinkAnnotId = annotId;
+      }
+      e.stopPropagation();
+      return;
+    }
+
+    // ── Link arc click — open / toggle card ──
+    if (linkHit) {
+      const li = parseInt(linkHit.dataset.linkIdx);
+      if (_popover?.type === 'link' && _popover.idx === li) { hideEditCard(); return; }
+      showEditCard('link', li, e.clientX, e.clientY);
+      return;
+    }
+
+    // ── Marker bead click — open / toggle card ──
+    if (markerHit) {
+      const mi = parseInt(markerHit.dataset.markerIdx);
+      if (_popover?.type === 'marker' && _popover.idx === mi) { hideEditCard(); return; }
+      closeAll();
+      showEditCard('marker', mi, e.clientX, e.clientY);
+      return;
+    }
+
+    // ── Node bead click — open / toggle card ──
+    if (nodeHit) {
+      const ni = parseInt(nodeHit.dataset.nodeIdx);
+      if (_popover?.type === 'node' && _popover.idx === ni) { hideEditCard(); return; }
+      closeAll();
+      showEditCard('node', ni, e.clientX, e.clientY);
+      return;
+    }
+
+    closeAll();
+  });
+}
+
+// ====================================================================
+// SECTION 17: Export handlers
+// ====================================================================
+
+async function exportJson() {
+  const blob = new Blob([JSON.stringify(spec, null, 2)], { type: 'application/json' });
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'timeline.json',
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    flash('JSON saved');
+  } catch {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'timeline.json';
+    a.click();
+  }
+}
+
+async function exportSvg() {
+  if (!spec.worlds.length) { showError('Nothing to export — add a timeline first'); return; }
+  let svgSrc;
+  try { svgSrc = render(spec); } catch(e) { showError('Render error: ' + e.message); return; }
+  const blob = new Blob([svgSrc], { type: 'image/svg+xml' });
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'timeline.svg',
+      types: [{ description: 'SVG', accept: { 'image/svg+xml': ['.svg'] } }]
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    flash('SVG saved');
+  } catch {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'timeline.svg';
+    a.click();
+  }
+}
+
+document.getElementById('btn-export-json').addEventListener('click', exportJson);
+document.getElementById('btn-export-svg').addEventListener('click', exportSvg);
+
+// ====================================================================
+// SECTION 18: File load + JSON panel bi-directionality
+// ====================================================================
+
+document.getElementById('file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { loadFromJson(e.target.result); flash('Loaded ' + file.name); };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+document.getElementById('json-textarea').addEventListener('input', function() {
+  clearTimeout(jsonDebounce);
+  jsonDebounce = setTimeout(() => loadFromJson(this.value), 350);
+});
+
+
+// ====================================================================
+// SECTION 19.5: Edit mode — state, helpers, per-tab edit/cancel functions
+// ====================================================================
+
+const editing = {
+  worlds: null, nodes: null, markers: null, welds: null,
+  intersections: null, branches: null, wormholes: null, cycles: null
+};
+
+function _enterEdit(key, label) {
+  editing[key] = label.idx;
+  const bar = document.getElementById(`edit-bar-${key}`);
+  bar.style.display = 'flex';
+  bar.querySelector('.edit-bar-text').textContent = `Editing — ${label.desc}`;
+  document.getElementById(`btn-add-${key}`).textContent = 'Save Changes';
+  showTab(label.tab);
+}
+
+function _exitEdit(key, btnLabel) {
+  editing[key] = null;
+  document.getElementById(`edit-bar-${key}`).style.display = 'none';
+  document.getElementById(`btn-add-${key}`).textContent = btnLabel;
+}
+
+// ── Worlds ──
+function editWorld(id) {
+  const idx = spec.worlds.findIndex(w => w.id === id);
+  if (idx < 0) return;
+  const w = spec.worlds[idx];
+  document.getElementById('world-id').value    = w.id;
+  document.getElementById('world-id').readOnly = true;
+  document.getElementById('world-label').value = w.label || '';
+  document.getElementById('world-color').value = w.color || '#6688cc';
+  document.getElementById('world-row').value   = w.row;
+  document.getElementById('world-weight').value     = w.weight || '';
+  document.getElementById('world-start-year').value = w.startYear || '';
+  document.getElementById('world-end-year').value   = w.endYear   || '';
+  if (w.divergeFrom) {
+    document.getElementById('world-diverge-from-world').value = w.divergeFrom.world;
+    document.getElementById('world-diverge-from-year').value  = w.divergeFrom.year;
+    document.getElementById('diverge-year-row').style.display = 'block';
+  } else {
+    document.getElementById('world-diverge-from-world').value = '';
+    document.getElementById('world-diverge-from-year').value  = '';
+    document.getElementById('diverge-year-row').style.display = 'none';
+  }
+  _enterEdit('worlds', { idx, desc: w.label || w.id, tab: 'timelines' });
+}
+
+function cancelEditWorlds() {
+  document.getElementById('world-id').readOnly = false;
+  ['world-id','world-label','world-weight','world-start-year','world-end-year','world-row'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('world-diverge-from-world').value = '';
+  document.getElementById('world-diverge-from-year').value  = '';
+  document.getElementById('diverge-year-row').style.display = 'none';
+  _exitEdit('worlds', '+ Add Timeline');
+}
+
+// ── Nodes / Markers — editing delegated to canvas card (defined in SECTION 9) ──
+
+// ── Welds ──
+function editWeld(idx) {
+  const w = spec.welds[idx];
+  document.getElementById('weld-from-world').value = w.from.world;
+  document.getElementById('weld-from-year').value  = w.from.year;
+  document.getElementById('weld-to-world').value   = w.to.world;
+  document.getElementById('weld-to-year').value    = w.to.year;
+  document.getElementById('weld-label').value      = w.label || '';
+  _enterEdit('welds', { idx, desc: `${w.from.world}:${w.from.year} → ${w.to.world}:${w.to.year}`, tab: 'welds' });
+}
+
+function cancelEditWelds() {
+  document.getElementById('weld-from-year').value = '';
+  document.getElementById('weld-to-year').value   = '';
+  document.getElementById('weld-label').value     = '';
+  _exitEdit('welds', '+ Add Connection');
+}
+
+// ── Intersections ──
+function editIntersection(idx) {
+  const inter = spec.intersections[idx];
+  document.getElementById('intersection-year').value  = inter.year;
+  document.getElementById('intersection-label').value = inter.label || '';
+  // Rebuild checkboxes with correct checked state
+  const box = document.getElementById('intersection-worlds-checkboxes');
+  box.innerHTML = spec.worlds.map(w => `
+    <label class="checkbox-label">
+      <input type="checkbox" name="inter-world" value="${w.id}"${inter.worlds.includes(w.id) ? ' checked' : ''} onchange="updateTerminusCheckboxes()">
+      ${escapeXml(w.label)}
+    </label>`).join('');
+  // Terminus: worlds whose endYear === inter.year
+  updateTerminusCheckboxes();
+  const terminusBox = document.getElementById('intersection-terminus-checkboxes');
+  terminusBox.querySelectorAll('input[name="inter-terminus"]').forEach(cb => {
+    const world = spec.worlds.find(w => w.id === cb.value);
+    cb.checked = !!(world && world.endYear === inter.year);
+  });
+  _enterEdit('intersections', { idx, desc: `year ${inter.year}`, tab: 'intersections' });
+}
+
+function cancelEditIntersections() {
+  document.getElementById('intersection-year').value  = '';
+  document.getElementById('intersection-label').value = '';
+  document.querySelectorAll('input[name="inter-world"]').forEach(cb => { cb.checked = false; });
+  updateTerminusCheckboxes();
+  _exitEdit('intersections', '+ Add Intersection');
+}
+
+// ── Branches ──
+function editBranch(idx) {
+  const b = spec.branches[idx];
+  document.getElementById('branch-from-world').value = b.fromWorld;
+  document.getElementById('branch-from-year').value  = b.fromYear;
+  document.getElementById('branch-new-world').value  = b.newWorld;
+  document.getElementById('branch-to-year').value    = b.toYear ?? b.fromYear;
+  _enterEdit('branches', { idx, desc: `${b.fromWorld}:${b.fromYear} → ${b.newWorld}:${b.toYear ?? b.fromYear}`, tab: 'branches' });
+}
+
+function cancelEditBranches() {
+  document.getElementById('branch-from-year').value = '';
+  document.getElementById('branch-to-year').value   = '';
+  _exitEdit('branches', '+ Add Branch');
+}
+
+// ── Wormholes ──
+function editWormhole(idx) {
+  const wh = spec.wormholes[idx];
+  document.getElementById('wormhole-world').value  = wh.world;
+  document.getElementById('wormhole-anchor').value = wh.anchor;
+  const sideEl = document.querySelector(`input[name="wormhole-side"][value="${wh.side || 'below'}"]`);
+  if (sideEl) sideEl.checked = true;
+  document.getElementById('wormhole-window-open').value  = wh.window?.open  || '';
+  document.getElementById('wormhole-window-close').value = wh.window?.close || '';
+  const jc = document.getElementById('wormhole-jumps-container');
+  jc.innerHTML = wh.jumps.map(y =>
+    `<input type="number" class="jump-year-input form-input" value="${y}" placeholder="Jump year">`
+  ).join('');
+  _enterEdit('wormholes', { idx, desc: `${wh.world} / ${wh.anchor}`, tab: 'wormholes' });
+}
+
+function cancelEditWormholes() {
+  document.getElementById('wormhole-anchor').value       = '';
+  document.getElementById('wormhole-window-open').value  = '';
+  document.getElementById('wormhole-window-close').value = '';
+  const jc = document.getElementById('wormhole-jumps-container');
+  jc.innerHTML = '<input type="number" class="jump-year-input form-input" placeholder="Jump year">';
+  _exitEdit('wormholes', '+ Add Wormhole');
+}
+
+// ── Cycles ──
+function editCycle(idx) {
+  const c = spec.cycles[idx];
+  document.getElementById('cycle-year').value  = c.year;
+  document.getElementById('cycle-label').value = c.label || '';
+  document.getElementById('cycle-color').value = c.color || '#C8A951';
+  _enterEdit('cycles', { idx, desc: `year ${c.year}`, tab: 'cycles' });
+}
+
+function cancelEditCycles() {
+  document.getElementById('cycle-year').value  = '';
+  document.getElementById('cycle-label').value = '';
+  document.getElementById('cycle-color').value = '#C8A951';
+  _exitEdit('cycles', '+ Add Cycle');
+}
+
+// ====================================================================
+// SECTION 19: Initialization
+// ====================================================================
+
+document.getElementById('setup-start-year').value = spec.yearRange[0];
+document.getElementById('setup-end-year').value   = spec.yearRange[1];
+
+// (marker-category and node-category selects were removed — categories handled by canvas edit card)
+
+// Keyboard: Escape closes card / cancels draw; Ctrl+Enter saves card
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (_popover) { hideEditCard(); return; }
+    if (linkDrawMode !== null) { cancelLinkDraw(); return; }
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (_popover) { e.preventDefault(); saveCard(); }
+  }
+});
+
+// Click on canvas-edit-card itself should not propagate to SVG
+document.getElementById('canvas-edit-card').addEventListener('click', e => e.stopPropagation());
+
+showTab('setup');
+liveRender();
+syncJsonPanel();
+updateAllSelectors();
+updateEventSelectors();
+refreshAllItemLists();
+
+</script>
+</body>
+</html>

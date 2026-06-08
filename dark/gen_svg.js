@@ -216,6 +216,22 @@ function shadeColor(hex, clone) {
     .join('');
 }
 
+function sineArcPath(x0, y0, cx, cy, x1, y1, amplitude, cycles, samples) {
+  const pts = [];
+  for (let i = 0; i <= samples; i++) {
+    const t  = i / samples;
+    const mt = 1 - t;
+    const px = mt*mt*x0 + 2*mt*t*cx + t*t*x1;
+    const py = mt*mt*y0 + 2*mt*t*cy + t*t*y1;
+    const dx = 2*(1-t)*(cx-x0) + 2*t*(x1-cx);
+    const dy = 2*(1-t)*(cy-y0) + 2*t*(y1-cy);
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const offset = amplitude * Math.sin(t * cycles * Math.PI * 2);
+    pts.push([px + offset * (-dy/len), py + offset * (dx/len)]);
+  }
+  return 'M ' + pts.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L ');
+}
+
 function render(spec) {
   const yearRange = spec.yearRange;
   const numRows = Math.max(...spec.worlds.map(w => w.row)) + 1;
@@ -328,7 +344,7 @@ function render(spec) {
       const arcHeight = Math.min(36, Math.max(14, Math.abs(dx) * 0.35));
       const midX = (anchorX + jx) / 2;
       const midY = (anchorY + jy) / 2 + side * arcHeight;
-      parts.push(`<path d="M ${anchorX} ${anchorY} Q ${midX} ${midY}, ${jx} ${jy}" fill="none" stroke="${world.color}" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.85"/>`);
+      parts.push(`<path d="${sineArcPath(anchorX, anchorY, midX, midY, jx, jy, 2, 5, 48)}" fill="none" stroke="${world.color}" stroke-width="1.2" opacity="0.85"/>`);
       const jumpAtNode = (spec.nodes || []).some(n => n.world === wormhole.world && n.year === jumpYear);
       if (!jumpAtNode) {
         if (isWindowed) drawTick(jx, jy, world.color);
@@ -373,7 +389,7 @@ function render(spec) {
       const sweepAmt = Math.max(60, Math.min(90, Math.abs(toX - fromX) * 0.12 + 55));
       const sw       = (fromX + toX) / 2 + sweepDir * sweepAmt;
       const pathD    = `M ${fromX.toFixed(1)} ${fromY.toFixed(1)} C ${sw.toFixed(1)} ${fromY.toFixed(1)}, ${sw.toFixed(1)} ${toY.toFixed(1)}, ${toX.toFixed(1)} ${toY.toFixed(1)}`;
-      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-dasharray="5 4" opacity="0.18" filter="url(#travel-glow)"/>`);
+      parts.push(`<path id="travel-arc-${i}" d="${pathD}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="5 4" opacity="0.18" filter="url(#travel-glow)"/>`);
       const c1ax = (fromX + sw) / 2,         c1ay = fromY;
       const c1bx = (fromX + 3*sw) / 4,       c1by = (3*fromY + toY) / 4;
       const Sx   = (fromX + 6*sw + toX) / 8, Sy   = (fromY + toY) / 2;

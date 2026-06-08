@@ -1,0 +1,165 @@
+{
+  "yearRange": [
+    1880,
+    2060
+  ],
+  "worlds": [
+    {
+      "id": "eva",
+      "label": "Eva",
+      "color": "#D4537E",
+      "row": 0
+    },
+    {
+      "id": "adam",
+      "label": "Adam",
+      "color": "#378ADD",
+      "row": 1
+    },
+    {
+      "id": "origin",
+      "label": "Origin",
+      "color": "#888780",
+      "row": 2,
+      "endYear": 1986
+    },
+    {
+      "id": "paradise",
+      "label": "Paradise",
+      "color": "#1D9E75",
+      "row": 3,
+      "divergeFrom": {
+        "world": "origin",
+        "year": 1971
+      }
+    }
+  ],
+  "intersections": [
+    {
+      "year": 1986,
+      "worlds": [
+        "adam",
+        "eva",
+        "origin"
+      ],
+      "label": "Tannhaus Event"
+    }
+  ],
+  "wormholes": [
+    {
+      "world": "adam",
+      "anchor": 1986,
+      "jumps": [
+        1953,
+        2019
+      ],
+      "side": "below",
+      "window": {
+        "open": "Jun 1986",
+        "close": "Nov 1986"
+      }
+    },
+    {
+      "world": "eva",
+      "anchor": 1986,
+      "jumps": [
+        2019,
+        2052
+      ],
+      "side": "below",
+      "window": {
+        "open": "Jun 1986",
+        "close": "Jun 1987"
+      }
+    }
+  ],
+  "segments": [
+    {
+      "world": "adam",
+      "from": 1888,
+      "to": 1921,
+      "label": "Sic Mundus"
+    },
+    {
+      "world": "adam",
+      "from": 2020,
+      "to": 2053,
+      "label": "Post-Apocalypse"
+    }
+  ],
+  "welds": [
+    {
+      "from": {
+        "world": "adam",
+        "year": 2020
+      },
+      "to": {
+        "world": "eva",
+        "year": 2020
+      },
+      "label": "Apocalypse"
+    }
+  ],
+  "cycles": [
+    {
+      "year": 1888,
+      "label": "-3"
+    },
+    {
+      "year": 1921,
+      "label": "-2"
+    },
+    {
+      "year": 1953,
+      "label": "-1"
+    },
+    {
+      "year": 1986,
+      "label": "0"
+    },
+    {
+      "year": 2019,
+      "label": "+1"
+    },
+    {
+      "year": 2052,
+      "label": "+2"
+    }
+  ],
+  "nodes": [
+    {
+      "world": "adam",
+      "year": 1921,
+      "label": "Portal"
+    },
+    {
+      "world": "eva",
+      "year": 2053,
+      "label": "Portal"
+    }
+  ],
+  "markers": [
+    {
+      "world": "adam",
+      "year": 2019,
+      "label": "Jonas discovers wormhole",
+      "color": "#378ADD",
+      "branches": [
+        {
+          "to": {
+            "world": "eva",
+            "year": 2053
+          },
+          "criteria": "Adam visits Eva"
+        }
+      ]
+    },
+    {
+      "world": "adam",
+      "year": 1904,
+      "label": "Hanno is born",
+      "color": "#378ADD"
+    }
+  ],
+  "branches": []
+}
