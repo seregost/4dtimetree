@@ -2663,9 +2663,21 @@ function addWormhole() {
   const winOpen  = document.getElementById('wormhole-window-open').value.trim();
   const winClose = document.getElementById('wormhole-window-close').value.trim();
 
-  if (!world)       { showError('Select a timeline'); return; }
+  const [rangeStart, rangeEnd] = spec.yearRange || [1900, 2100];
+
+  if (!world)        { showError('Select a timeline'); return; }
   if (isNaN(anchor)) { showError('Anchor year is required'); return; }
+  if (anchor < rangeStart || anchor > rangeEnd) {
+    showError(`Anchor year must be within the diagram range (${rangeStart}–${rangeEnd})`); return;
+  }
   if (jumps.length === 0) { showError('At least one destination year is required'); return; }
+  const badJump = jumps.find(y => y < rangeStart || y > rangeEnd);
+  if (badJump !== undefined) {
+    showError(`Destination year ${badJump} is outside the diagram range (${rangeStart}–${rangeEnd})`); return;
+  }
+  if (jumps.includes(anchor)) {
+    showError('Destination year cannot be the same as the anchor year'); return;
+  }
 
   const wormhole = { world, anchor, jumps, side };
   if (winOpen || winClose) {
