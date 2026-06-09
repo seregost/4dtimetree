@@ -680,7 +680,8 @@
 
       <!-- Timelines tab -->
       <div id="tab-timelines" class="tab-pane">
-        <div class="form-section-title">Add Timeline</div>
+        <div class="form-section-title">Timelines</div>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">timeline</strong> is a horizontal row representing a world, era, or character path. Each has its own color and can optionally diverge from another timeline at a specific year.</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">ID *</label>
@@ -735,7 +736,7 @@
       <!-- Nodes tab -->
       <div id="tab-nodes" class="tab-pane">
         <div class="form-section-title">Nodes</div>
-        <p class="form-hint" style="margin-bottom:10px">Click any node bead on the canvas to edit it. Add a new one below — a card opens on the canvas to fill in the details.</p>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">node</strong> is an unmarked point on a timeline — no label, just a connection anchor. Use nodes when you need a precise reference point for welds or causal links without cluttering the diagram. Click a bead on the canvas to edit, or add one below.</p>
         <button class="btn-add" onclick="addNode()">+ Add Node</button>
         <div class="item-list-title">Nodes</div>
         <div class="item-list" id="nodes-item-list"></div>
@@ -744,7 +745,7 @@
       <!-- Markers tab -->
       <div id="tab-markers" class="tab-pane">
         <div class="form-section-title">Markers</div>
-        <p class="form-hint" style="margin-bottom:10px">Click any marker bead on the canvas to edit it. Add a new one below — a card opens on the canvas to fill in the details.</p>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">marker</strong> is a named, visible event on a timeline — shown with a label, optional category icon, and clickable annotation. Use markers for story beats, key encounters, and any event that needs a narrative description or causal link. Click a bead on the canvas to edit, or add one below.</p>
         <button class="btn-add" onclick="addMarker()">+ Add Marker</button>
         <div class="item-list-title">Markers</div>
         <div class="item-list" id="markers-item-list"></div>
@@ -752,8 +753,8 @@
 
       <!-- Welds tab -->
       <div id="tab-welds" class="tab-pane">
-        <div class="form-section-title">Add Connection (Weld)</div>
-        <p class="form-hint" style="margin-bottom:10px">A weld draws a vertical bridge between two points. Typically both years are the same (same moment in time).</p>
+        <div class="form-section-title">Welds</div>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">weld</strong> draws a vertical bridge between two timeline points — typically at the same year, to show two worlds sharing a moment. Use welds for time-travel arrivals, portal crossings, or any two-world convergence.</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">From Timeline *</label>
@@ -782,17 +783,17 @@
           <label class="form-label">Label</label>
           <input type="text" id="weld-label" class="form-input" placeholder="optional">
         </div>
-        <div id="edit-bar-welds" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing connection</span><button class="btn-cancel-edit" onclick="cancelEditWelds()">× Cancel</button></div>
-        <button class="btn-add" id="btn-add-welds" onclick="addWeld()">+ Add Connection</button>
+        <div id="edit-bar-welds" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing weld</span><button class="btn-cancel-edit" onclick="cancelEditWelds()">× Cancel</button></div>
+        <button class="btn-add" id="btn-add-welds" onclick="addWeld()">+ Add Weld</button>
 
-        <div class="item-list-title">Connections</div>
+        <div class="item-list-title">Welds</div>
         <div class="item-list" id="welds-item-list"></div>
       </div>
 
       <!-- Intersections tab -->
       <div id="tab-intersections" class="tab-pane">
-        <div class="form-section-title">Add Intersection (Merge)</div>
-        <p class="form-hint" style="margin-bottom:10px">An intersection is where multiple timelines converge at a single year.</p>
+        <div class="form-section-title">Intersections</div>
+        <p class="form-hint" style="margin-bottom:10px">An <strong style="color:var(--text-primary)">intersection</strong> marks where multiple timelines converge at a single year. Timelines can optionally terminate here — useful for collapses, endings, or merges where a world ceases to exist independently.</p>
         <div class="form-group">
           <label class="form-label">Year *</label>
           <input type="number" id="intersection-year" class="form-input" placeholder="Year">
@@ -823,8 +824,8 @@
 
       <!-- Branches tab -->
       <div id="tab-branches" class="tab-pane">
-        <div class="form-section-title">Add Branch</div>
-        <p class="form-hint" style="margin-bottom:10px">Draws a dashed arc between any two points on any two timelines — useful for showing causation, jumps, or connections.</p>
+        <div class="form-section-title">Branches</div>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">branch</strong> draws a simple curved arc between any two timeline points — useful for divergences, splits, or visual connections not tied to named events. For conditional narrative connections between events, use Causal Links instead.</p>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">From Timeline *</label>
@@ -858,8 +859,8 @@
 
       <!-- Wormholes tab -->
       <div id="tab-wormholes" class="tab-pane">
-        <div class="form-section-title">Add Wormhole</div>
-        <p class="form-hint" style="margin-bottom:10px">A wormhole draws sine-wave arcs from an anchor year to one or more jump years on the same timeline.</p>
+        <div class="form-section-title">Wormholes</div>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">wormhole</strong> draws repeating sine-wave arcs from an anchor year to one or more destination years on the same timeline. Use wormholes for time loops, recursive travel, or any cyclical connection within a single world.</p>
         <div class="form-group">
           <label class="form-label">Timeline *</label>
           <select id="wormhole-world" class="form-input" data-world-selector>
@@ -871,9 +872,9 @@
           <input type="number" id="wormhole-anchor" class="form-input" placeholder="Anchor year">
         </div>
         <div class="form-group">
-          <label class="form-label">Jump Years * <button class="btn-secondary" onclick="addJumpYearInput()" style="margin-left:6px;font-size:8px;padding:2px 6px">+ Add</button></label>
+          <label class="form-label">Destination Years * <button class="btn-secondary" onclick="addJumpYearInput()" style="margin-left:6px;font-size:8px;padding:2px 6px">+ Add</button></label>
           <div id="wormhole-jumps-container">
-            <input type="number" class="jump-year-input form-input" placeholder="Jump year">
+            <input type="number" class="jump-year-input form-input" placeholder="e.g. 1986">
           </div>
         </div>
         <div class="form-group">
@@ -909,7 +910,7 @@
           <div class="branch-dest-hint" id="link-draw-hint"></div>
         </div>
 
-        <p class="form-hint" style="margin-bottom:10px">Click any arc on the canvas to edit it. To draw a new link: switch to this tab, then click two beads.</p>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">causal link</strong> connects two named events with a conditional arc — "if X, then Y follows." To draw one, click two event beads on the canvas while on this tab. Click any existing arc to edit its criteria and notes.</p>
 
         <div class="item-list-title">All Links</div>
         <div class="item-list" id="links-item-list"></div>
@@ -917,8 +918,8 @@
 
       <!-- Cycles tab -->
       <div id="tab-cycles" class="tab-pane">
-        <div class="form-section-title">Add Cycle Marker</div>
-        <p class="form-hint" style="margin-bottom:10px">Draws a dashed vertical line at a year — useful for marking repeating periods.</p>
+        <div class="form-section-title">Cycles</div>
+        <p class="form-hint" style="margin-bottom:10px">A <strong style="color:var(--text-primary)">cycle</strong> draws a dashed vertical line at a year — useful for recurring events, seasonal patterns, or any moment that repeats identically across all timelines.</p>
         <div class="form-group">
           <label class="form-label">Year *</label>
           <input type="number" id="cycle-year" class="form-input" placeholder="Year">
@@ -932,7 +933,7 @@
           <input type="color" id="cycle-color" class="form-input" value="#C8A951">
         </div>
         <div id="edit-bar-cycles" class="edit-bar" style="display:none"><span class="edit-bar-text">Editing cycle</span><button class="btn-cancel-edit" onclick="cancelEditCycles()">× Cancel</button></div>
-        <button class="btn-add" id="btn-add-cycles" onclick="addCycle()">+ Add Cycle</button>
+        <button class="btn-add" id="btn-add-cycles" onclick="addCycle()">+ Add Cycle Marker</button>
 
         <div class="item-list-title">Cycles</div>
         <div class="item-list" id="cycles-item-list"></div>
@@ -1218,7 +1219,7 @@ function render(spec) {
 
   const parts = [];
   parts.push(`<svg width="100%" viewBox="0 0 ${VIEW_W} ${VIEW_H}" xmlns="http://www.w3.org/2000/svg" role="img">`);
-  parts.push(`<title>Dark timeline diagram</title>`);
+  parts.push(`<title>4D Timetree</title>`);
   parts.push(`<desc>Timeline graph generated from JSON spec</desc>`);
 
   parts.push(`<rect x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" fill="#141418"/>`);
@@ -1803,6 +1804,8 @@ function refreshAllItemLists() {
 // ====================================================================
 
 function showTab(name) {
+  // Cancel link draw if navigating away from the Links tab
+  if (name !== 'links' && linkDrawMode !== null) cancelLinkDraw();
   activeTab = name;
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -2646,7 +2649,7 @@ function addJumpYearInput() {
   const input = document.createElement('input');
   input.type        = 'number';
   input.className   = 'jump-year-input form-input';
-  input.placeholder = 'Jump year';
+  input.placeholder = 'e.g. 1986';
   c.appendChild(input);
 }
 
@@ -2662,7 +2665,7 @@ function addWormhole() {
 
   if (!world)       { showError('Select a timeline'); return; }
   if (isNaN(anchor)) { showError('Anchor year is required'); return; }
-  if (jumps.length === 0) { showError('At least one jump year is required'); return; }
+  if (jumps.length === 0) { showError('At least one destination year is required'); return; }
 
   const wormhole = { world, anchor, jumps, side };
   if (winOpen || winClose) {
@@ -2682,7 +2685,7 @@ function addWormhole() {
   document.getElementById('wormhole-window-open').value  = '';
   document.getElementById('wormhole-window-close').value = '';
   const jc = document.getElementById('wormhole-jumps-container');
-  jc.innerHTML = '<input type="number" class="jump-year-input form-input" placeholder="Jump year">';
+  jc.innerHTML = '<input type="number" class="jump-year-input form-input" placeholder="e.g. 1986">';
 }
 
 function deleteWormhole(idx) {
@@ -3384,7 +3387,7 @@ function cancelEditWormholes() {
   document.getElementById('wormhole-window-open').value  = '';
   document.getElementById('wormhole-window-close').value = '';
   const jc = document.getElementById('wormhole-jumps-container');
-  jc.innerHTML = '<input type="number" class="jump-year-input form-input" placeholder="Jump year">';
+  jc.innerHTML = '<input type="number" class="jump-year-input form-input" placeholder="e.g. 1986">';
   _exitEdit('wormholes', '+ Add Wormhole');
 }
 
