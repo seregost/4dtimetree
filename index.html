@@ -539,6 +539,34 @@
     }
     .btn-edit:hover { color: var(--amber); }
 
+    /* ── Right-click context menu ── */
+    #ctx-menu {
+      position: absolute;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      background: #1a1a1f;
+      border: 1px solid rgba(200,169,81,0.3);
+      border-radius: 3px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.65);
+      min-width: 120px;
+      overflow: hidden;
+    }
+    #ctx-menu.visible { display: flex; }
+    .ctx-item {
+      padding: 7px 14px;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.1s;
+      user-select: none;
+    }
+    .ctx-item:hover { background: rgba(255,255,255,0.06); }
+    .ctx-item.ctx-danger { color: rgba(210,80,80,0.8); }
+    .ctx-item.ctx-danger:hover { background: rgba(192,57,43,0.12); color: rgba(210,80,80,1); }
+    .ctx-sep { border: none; border-top: 1px solid var(--border-subtle); margin: 0; }
+
     /* ── Canvas Edit Card (shared popover for marker / node / link) ── */
     #canvas-edit-card {
       position: absolute;
@@ -979,6 +1007,13 @@
     <div class="diagram-frame">
       <div class="diagram-corners"></div>
       <div id="diagram-container"></div>
+      <!-- Right-click context menu -->
+      <div id="ctx-menu">
+        <div class="ctx-item" onclick="ctxEdit()">Edit</div>
+        <hr class="ctx-sep">
+        <div class="ctx-item ctx-danger" onclick="ctxDelete()">Delete</div>
+      </div>
+
       <!-- Canvas edit card — floats over diagram, shared for markers / nodes / links -->
       <div id="canvas-edit-card">
         <div class="cec-header">
@@ -1697,6 +1732,7 @@ let _activeLinkAnnotId = null;
 let jsonDebounce      = null;
 
 function liveRender() {
+  hideCtxMenu();
   try {
     errorBanner.textContent = '';
     errorBanner.style.display = 'none';
@@ -2195,6 +2231,42 @@ function _cecCategoryOptions(current) {
     CATEGORIES.map(c =>
       `<option value="${c.id}"${c.id === current ? ' selected' : ''}>${c.icon}  ${c.name}</option>`
     ).join('');
+}
+
+function showCtxMenu(type, idx, screenX, screenY) {
+  _ctxTarget = { type, idx };
+  const menu  = document.getElementById('ctx-menu');
+  const frame = document.querySelector('.diagram-frame');
+  const r     = frame.getBoundingClientRect();
+  let left = screenX - r.left;
+  let top  = screenY - r.top;
+  // Clamp so menu stays inside frame
+  menu.style.left = Math.min(left, r.width  - 130) + 'px';
+  menu.style.top  = Math.min(top,  r.height -  60) + 'px';
+  menu.classList.add('visible');
+}
+
+function hideCtxMenu() {
+  _ctxTarget = null;
+  document.getElementById('ctx-menu').classList.remove('visible');
+}
+
+function ctxEdit() {
+  if (!_ctxTarget) return;
+  const { type, idx } = _ctxTarget;
+  hideCtxMenu();
+  const frame = document.querySelector('.diagram-frame');
+  const r = frame.getBoundingClientRect();
+  showEditCard(type, idx, r.left + r.width / 2, r.top + r.height / 3);
+}
+
+function ctxDelete() {
+  if (!_ctxTarget) return;
+  const { type, idx } = _ctxTarget;
+  hideCtxMenu();
+  if      (type === 'marker') deleteMarker(idx);
+  else if (type === 'node')   deleteNode(idx);
+  else if (type === 'link')   deleteLink(idx);
 }
 
 function positionCard(card, screenX, screenY) {
@@ -2812,6 +2884,7 @@ let linkSource         = null;  // { ref, x, y, label } — source bead
 let linkDest           = null;  // { ref, x, y } — destination bead
 let linkEditIdx        = null;  // index into spec.causalLinks being edited
 let _popover           = null;  // { type: 'marker'|'node'|'link', idx } or null
+let _ctxTarget         = null;  // { type, idx } for right-click context menu
 
 function activatePlaceMode(yearInputId, worldSelectId) {
   if (placeMode) {
@@ -3088,7 +3161,24 @@ function attachMarkerInteractivity() {
     }
   }
 
+  svg.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const markerHit = e.target.closest('[data-marker-idx]');
+    const nodeHit   = e.target.closest('[data-node-idx]');
+    const linkHit   = e.target.closest('[data-link-idx]');
+    if (markerHit) {
+      showCtxMenu('marker', parseInt(markerHit.dataset.markerIdx), e.clientX, e.clientY);
+    } else if (nodeHit) {
+      showCtxMenu('node', parseInt(nodeHit.dataset.nodeIdx), e.clientX, e.clientY);
+    } else if (linkHit) {
+      showCtxMenu('link', parseInt(linkHit.dataset.linkIdx), e.clientX, e.clientY);
+    } else {
+      hideCtxMenu();
+    }
+  });
+
   svg.addEventListener('click', (e) => {
+    hideCtxMenu();
     if (placeMode) return;
     const markerHit = e.target.closest('[data-marker-idx]');
     const nodeHit   = e.target.closest('[data-node-idx]');
@@ -3463,7 +3553,8 @@ document.getElementById('setup-end-year').value   = spec.yearRange[1];
 // Keyboard: Escape closes card / cancels draw; Ctrl+Enter saves card
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    if (_popover) { hideEditCard(); return; }
+    if (_ctxTarget) { hideCtxMenu(); return; }
+    if (_popover)   { hideEditCard(); return; }
     if (linkDrawMode !== null) { cancelLinkDraw(); return; }
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -3471,8 +3562,10 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Click on canvas-edit-card itself should not propagate to SVG
+// Clicks inside the card or context menu should not propagate to SVG
 document.getElementById('canvas-edit-card').addEventListener('click', e => e.stopPropagation());
+document.getElementById('ctx-menu').addEventListener('click', e => e.stopPropagation());
+document.getElementById('ctx-menu').addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });
 
 showTab('setup');
 liveRender();
